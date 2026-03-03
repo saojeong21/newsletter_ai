@@ -1,0 +1,29 @@
+# Environment variables (never commit these)
+.env
+.env.local
+.env.*.local
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# Node.js
+node_modules/
+.npm/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/

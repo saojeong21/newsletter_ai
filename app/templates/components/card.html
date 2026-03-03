@@ -1,0 +1,22 @@
+<!-- 재사용 가능한 뉴스 카드 컴포넌트 -->
+<article class="news-card">
+    <div class="card-header">
+        <span class="source-badge">{{ article.source_name }}</span>
+        <time class="card-time">
+            {% if article.published_at %}{{ article.published_at.strftime('%m/%d %H:%M') }}
+            {% else %}{{ article.collected_at.strftime('%m/%d %H:%M') }}{% endif %}
+        </time>
+    </div>
+    <h2 class="card-title">
+        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="card-title-link">{{ article.title }}</a>
+    </h2>
+    <div class="card-summary">
+        {% if article.summary_ko %}<p class="summary-text">{{ article.summary_ko }}</p>
+        {% elif article.description %}<p class="summary-text">{{ article.description[:200] }}...</p>
+        {% else %}<p class="summary-empty">요약 없음</p>{% endif %}
+    </div>
+    <div class="card-footer">
+        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">원문 보기 →</a>
+        {% if article.is_summarized and article.summary_ko %}<span class="ai-badge">AI 요약</span>{% endif %}
+    </div>
+</article>
