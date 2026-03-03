@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}{% if selected_date == today %}오늘{% else %}{{ selected_date }}{% endif %}의 AI 뉴스 — AI 뉴스레터{% endblock %}
+
+{% block content %}
+<section class="page-hero" aria-labelledby="heroTitle">
+    <div class="hero-content">
+        <div class="hero-greeting">
+            <span class="hero-weather-emoji" aria-hidden="true" id="heroEmoji">🌅</span>
+            <span class="hero-greeting-text" id="heroGreetingText">좋은 아침입니다</span>
+        </div>
+        <h1 class="hero-title" id="heroTitle">
+            {% if selected_date == today %}오늘의 AI 뉴스{% else %}{{ selected_date }} AI 뉴스{% endif %}
+        </h1>
+        <div class="hero-stats">
+            {% if article_count > 0 %}
+            <div class="stat-item">
+                <span class="stat-icon">📰</span>
+                <div><div class="stat-value">{{ article_count }}</div><div class="stat-label">수집 기사</div></div>
+            </div>
+            {% set summarized_count = articles | selectattr('is_summarized') | list | length %}
+            {% if summarized_count > 0 %}
+            <div class="stat-item">
+                <span class="stat-icon">✶</span>
+                <div><div class="stat-value">{{ summarized_count }}</div><div class="stat-label">AI 요약</div></div>
+            </div>
+            {% endif %}
+            {% set source_count = articles | map(attribute='source_name') | unique | list | length %}
+            {% if source_count > 0 %}
+            <div class="stat-item">
+                <span class="stat-icon">🌐</span>
+                <div><div class="stat-value">{{ source_count }}</div><div class="stat-label">소스</div></div>
+            </div>
+            {% endif %}
+            {% else %}
+            <p class="hero-subtitle">아직 수집된 기사가 없습니다.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="date-picker-wrapper">
+        <label for="datePicker" class="date-label">날짜 선택</label>
+        <input type="date" id="datePicker" class="date-picker" value="{{ selected_date }}" max="{{ today }}" onchange="location.href='/?date='+this.value">
+    </div>
+</section>
+
+{% if available_dates %}
+<nav class="date-nav" aria-label="최근 수집 날짜">
+    <span class="date-nav-label">최근 수집일:</span>
+    <div class="date-chips">
+        {% for d in available_dates[:7] %}
+        <a href="/?date={{ d }}" class="date-chip {% if d == selected_date %}active{% endif %}">{{ d }}</a>
+        {% endfor %}
+    </div>
+</nav>
+{% endif %}
+
+{% if articles %}
+<div class="filter-bar" role="group">
+    <span class="filter-label">필터</span>
+    <button class="filter-btn active" data-filter="all">전체 {{ article_count }}</button>
+    <button class="filter-btn" data-filter="domestic">국내</button>
+    <button class="filter-btn" data-filter="international">해외</button>
+</div>
+
+<section class="news-grid" id="newsGrid">
+    {% for article in articles %}
+    {% set src_key = article.source_name | replace(' ', '-') | lower | truncate(20, False, '') %}
+    {% set is_domestic = 'korea' in article.source_name | lower
+        or 'zdnet' in src_key or 'etnews' in src_key
+        or '전자신문' in article.source_name or 'ai타임스' in article.source_name
+        or '한국경제' in article.source_name or '조선' in article.source_name
+        or '중앙' in article.source_name or '연합' in article.source_name
+        or '한게레' in article.source_name %}
+    <article class="news-card" data-source="{{ src_key }}" data-region="{% if is_domestic %}domestic{% else %}international{% endif %}">
+        <div class="card-colorbar src-{{ src_key }}" aria-hidden="true"></div>
+        <div class="card-body">
+            <div class="card-header">
+                <span class="source-badge src-{{ src_key }}">{{ article.source_name }}</span>
+                <time class="card-time">
+                    {% if article.published_at %}{{ article.published_at.strftime('%m/%d %H:%M') }}
+                    {% else %}{{ article.collected_at.strftime('%m/%d %H:%M') }}{% endif %}
+                </time>
+            </div>
+            <h2 class="card-title">
+                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="card-title-link">{{ article.title }}</a>
+            </h2>
+            <div class="card-summary">
+                {% if article.summary_ko %}<p class="summary-text">{{ article.summary_ko }}</p>
+                {% elif article.description %}<p class="summary-text description-fallback">{{ article.description[:200] }}{% if article.description|length > 200 %}...{% endif %}</p>
+                {% else %}<p class="summary-empty">요약을 불러오는 중입니다...</p>{% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">원문 보기 →</a>
+                {% if article.is_summarized and article.summary_ko %}<span class="ai-badge">AI 요약</span>{% endif %}
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</section>
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📰</div>
+    <h2 class="empty-title">
+        {% if selected_date == today %}오늘 수집된 뉴스가 없습니다
+        {% else %}{{ selected_date }}에 수집된 뉴스가 없습니다{% endif %}
+    </h2>
+    <p class="empty-desc">매일 오전 7시에 자동으로 뉴스가 수집됩니다.<br>아래 버튼으로 지금 바로 수집을 시작할 수 있습니다.</p>
+    <div class="empty-actions">
+        <form action="/api/collect" method="post" id="emptyCollectForm">
+            <button type="submit" class="btn btn-primary" id="emptyCollectBtn">
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span class="btn-label">지금 수집하기</span>
+            </button>
+        </form>
+        {% if available_dates %}
+        <a href="/?date={{ available_dates[0] }}" class="btn btn-outline">최근 뉴스 보기 ({{ available_dates[0] }})</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if articles %}
+<section class="keywords-section">
+    <div class="keywords-header">
+        <span class="keywords-icon">🔥</span>
+        <h2 class="keywords-title">오늘의 AI 트렌드 키워드</h2>
+        <span class="keywords-subtitle">수집 기사 제목 기반</span>
+    </div>
+    <div class="keyword-tags" id="keywordTags"><span class="keyword-tag">키워드 분석 중...</span></div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function() {
+        var hour = new Date().getHours();
+        var emojis = ['🌙','🌙','🌙','🌙','🌙','🌅','🌅','☀️','☀️','☀️','☀️','☀️','🏔️','🏔️','🏔️','🏔️','🏔️','🏔️','🏗️','🏗️','🌇','🌃','🌙','🌙'];
+        var greetings = ['좋은 새벽입니다','좋은 새벽입니다','좋은 새벽입니다','좋은 새벽입니다','좋은 새벽입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 점심입니다','좋은 오후입니다','좋은 오후입니다','좋은 오후입니다','좋은 오후입니다','좋은 오후입니다','좋은 저녁입니다','좋은 저녁입니다','좋은 저녁입니다','좋은 밤입니다','좋은 밤입니다','좋은 밤입니다'];
+        var e = document.getElementById('heroEmoji'), g = document.getElementById('heroGreetingText');
+        if (e) e.textContent = emojis[hour]||'☀️';
+        if (g) g.textContent = greetings[hour]||'안녕하세요';
+    })();
+
+    (function() {
+        var btns = document.querySelectorAll('.filter-btn'), cards = document.querySelectorAll('.news-card');
+        if (!btns.length) return;
+        btns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var filter = this.dataset.filter;
+                btns.forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+                this.classList.add('active'); this.setAttribute('aria-pressed','true');
+                cards.forEach(function(card){ card.setAttribute('data-hidden', filter==='all'||card.dataset.region===filter?'false':'true'); });
+            });
+        });
+    })();
+
+    (function() {
+        var form = document.getElementById('emptyCollectForm');
+        if (!form) return;
+        form.addEventListener('submit', function(e){ e.preventDefault(); if (window.__handleCollect) window.__handleCollect(document.getElementById('emptyCollectBtn')); });
+    })();
+
+    (function() {
+        var container = document.getElementById('keywordTags');
+        if (!container) return;
+        var titles = Array.from(document.querySelectorAll('.card-title-link')).map(function(el){ return el.textContent.trim(); });
+        if (!titles.length) { container.innerHTML = '<span class="keyword-tag">기사 없음</span>'; return; }
+        var stopWords = new Set(['그','이','저','것','수','를','가','은','는','에','의','로','으로','와','과','도','들','에서','했다','한다','하는','있다','없다','되다','대한','위한','통한','관련','주요','공개','발표','출시','국내','the','a','an','of','to','in','for','on','with','at','by','and','or','not','is','are','was','new','says']);
+        var freq = {};
+        titles.forEach(function(t){ (t.match(/[\uac00-\ud7a3]{2,}|[A-Za-z]{3,}/g)||[]).forEach(function(w){ var lw=w.toLowerCase(); if(!stopWords.has(lw)&&!stopWords.has(w)) freq[w]=(freq[w]||0)+1; }); });
+        var sorted = Object.entries(freq).filter(function(e){ return e[1]>=1; }).sort(function(a,b){ return b[1]-a[1]; }).slice(0,20);
+        if (!sorted.length) { container.innerHTML = '<span class="keyword-tag">키워드를 추출할 수 없습니다</span>'; return; }
+        var maxF = sorted[0][1];
+        container.innerHTML = sorted.map(function(e){ var r=e[1]/maxF, cls=r>=0.8?'kw-xl':r>=0.5?'kw-lg':''; return '<span class="keyword-tag '+cls+'" title="'+e[1]+'회 언급">'+(function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');})(e[0])+'</span>'; }).join('');
+    })();
+</script>
+{% endblock %}

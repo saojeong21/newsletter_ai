@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI 뉴스레터{% endblock %}</title>
+    <meta name="description" content="매일 아침 국내외 주요 AI 뉴스를 자동 수집하여 한국어로 요약 제공">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="site-header" role="banner">
+        <div class="container">
+            <div class="header-inner">
+                <a href="/" class="logo" aria-label="AI 뉴스레터 홈으로 이동">
+                    <span class="logo-icon" aria-hidden="true">☀️</span>
+                    <div class="logo-text">
+                        <span class="logo-title">AI 뉴스레터</span>
+                        <span class="logo-subtitle">매일 오전 7시 자동 수집</span>
+                    </div>
+                </a>
+                <div class="header-dateline" aria-label="오늘 날짜">
+                    <span class="header-date" id="headerDate">불러오는 중...</span>
+                    <span class="header-greeting" id="headerGreeting">좋은 아침입니다</span>
+                </div>
+                <nav class="header-nav" aria-label="주요 메뉴">
+                    <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">홈</a>
+                    <a href="/news" class="nav-link {% if request.url.path == '/news' %}active{% endif %}">아카이브</a>
+                    <a href="/api/articles" class="nav-link" target="_blank" rel="noopener noreferrer">API</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="site-main" id="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-inner">
+                <p class="footer-text">AI 뉴스레터 &mdash; 매일 오전 7시 자동 수집</p>
+                <div class="footer-actions">
+                    <form action="/api/collect" method="post" class="collect-form" id="collectForm">
+                        <button type="submit" class="btn btn-outline btn-sm" id="collectBtn">
+                            <span class="btn-spinner" aria-hidden="true"></span>
+                            <span class="btn-label">지금 수집하기</span>
+                        </button>
+                    </form>
+                    <a href="/health" class="footer-link" target="_blank" rel="noopener noreferrer">서버 상태</a>
+                    <a href="/api/stats" class="footer-link" target="_blank" rel="noopener noreferrer">통계</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite">
+        <div class="loading-spinner-large" aria-hidden="true"></div>
+        <div class="loading-content">
+            <div class="loading-icon" id="loadingIcon" aria-hidden="true">📡</div>
+            <p class="loading-message" id="loadingMessage">뉴스를 수집하는 중...</p>
+            <p class="loading-submessage">잠시만 기다려 주세요 (최대 10분 소요)</p>
+            <div class="loading-dots" aria-hidden="true">
+                <div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <script>
+        (function() {
+            var now = new Date(), hour = now.getHours();
+            var dateEl = document.getElementById('headerDate'), greetEl = document.getElementById('headerGreeting');
+            if (dateEl) dateEl.textContent = now.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+            if (greetEl) {
+                var g = '좋은 아침입니다';
+                if (hour >= 12 && hour < 18) g = '좋은 오후입니다';
+                else if (hour >= 18 || hour < 5) g = '좋은 저녁입니다';
+                greetEl.textContent = g;
+            }
+        })();
+
+        var toastTimers = {};
+        function showToast(opts) {
+            var icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'}, type = opts.type||'info', duration = opts.duration!=null?opts.duration:4500;
+            var id = 'toast-'+Date.now(), el = document.createElement('div');
+            el.className = 'toast toast-'+type; el.id = id; el.setAttribute('role','alert');
+            el.innerHTML = '<span class="toast-icon">'+icons[type]+'</span><div class="toast-body"><p class="toast-title">'+escapeHtml(opts.title||'')+'</p><p class="toast-msg">'+escapeHtml(opts.message||'')+'</p></div><button class="toast-close" onclick="closeToast(\"'+id+'\")">&times;</button>';
+            document.getElementById('toastContainer').appendChild(el);
+            requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add('show'); }); });
+            if (duration > 0) toastTimers[id] = setTimeout(function(){ closeToast(id); }, duration);
+            return id;
+        }
+        function closeToast(id) {
+            var el = document.getElementById(id); if (!el) return;
+            clearTimeout(toastTimers[id]); el.classList.remove('show'); el.classList.add('hide');
+            setTimeout(function(){ el.remove(); }, 350);
+        }
+        function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        var loadingInterval = null;
+        var STEPS = [{icon:'📡',msg:'뉴스를 수집하는 중...'},{icon:'🔍',msg:'기사를 분석하는 중...'},{icon:'🤖',msg:'AI가 요약하는 중...'},{icon:'💾',msg:'DB에 저장하는 중...'},{icon:'✨',msg:'거의 다 됐어요...'}];
+        function showLoadingOverlay() {
+            var o = document.getElementById('loadingOverlay'), m = document.getElementById('loadingMessage'), i = document.getElementById('loadingIcon');
+            o.classList.add('active'); document.body.style.overflow = 'hidden';
+            var s = 0;
+            if (i) i.textContent = STEPS[0].icon;
+            if (m) m.textContent = STEPS[0].msg;
+            loadingInterval = setInterval(function(){
+                s = (s+1)%STEPS.length;
+                if (i) i.textContent = STEPS[s].icon;
+                if (m) { m.style.opacity='0'; setTimeout(function(){ m.textContent=STEPS[s].msg; m.style.opacity='1'; },200); }
+            }, 2200);
+        }
+        function hideLoadingOverlay() {
+            clearInterval(loadingInterval); loadingInterval = null;
+            document.getElementById('loadingOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        function handleCollect(btn) {
+            btn.disabled = true; btn.classList.add('loading');
+            var lbl = btn.querySelector('.btn-label'); if (lbl) lbl.textContent = '수집 중...';
+            showLoadingOverlay();
+            fetch('/api/collect',{method:'POST'})
+                .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,status:r.status,data:d}; }); })
+                .then(function(r){
+                    hideLoadingOverlay();
+                    if (r.status===409) showToast({type:'warning',title:'이미 진행 중',message:'수집이 이미 진행 중입니다.'});
+                    else if (r.status===202||r.ok) { showToast({type:'info',title:'수집 시작!',message:r.data.message||'백그라운드에서 수집 중입니다.',duration:7000}); setTimeout(function(){ location.reload(); },12000); }
+                    else showToast({type:'error',title:'수집 오류',message:r.data.detail||'알 수 없는 오류'});
+                })
+                .catch(function(e){ hideLoadingOverlay(); showToast({type:'error',title:'요청 실패',message:e.message}); })
+                .finally(function(){ btn.disabled=false; btn.classList.remove('loading'); if(lbl) lbl.textContent='지금 수집하기'; });
+        }
+        var cf = document.getElementById('collectForm');
+        if (cf) cf.addEventListener('submit', function(e){ e.preventDefault(); handleCollect(document.getElementById('collectBtn')); });
+        window.__handleCollect = handleCollect;
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
