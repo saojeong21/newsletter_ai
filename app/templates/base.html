@@ -12,9 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- 헤더 -->
     <header class="site-header" role="banner">
         <div class="container">
             <div class="header-inner">
+                <!-- 로고 -->
                 <a href="/" class="logo" aria-label="AI 뉴스레터 홈으로 이동">
                     <span class="logo-icon" aria-hidden="true">☀️</span>
                     <div class="logo-text">
@@ -22,10 +24,14 @@
                         <span class="logo-subtitle">매일 오전 7시 자동 수집</span>
                     </div>
                 </a>
+
+                <!-- 날짜/인사 (데스크탑) -->
                 <div class="header-dateline" aria-label="오늘 날짜">
                     <span class="header-date" id="headerDate">불러오는 중...</span>
                     <span class="header-greeting" id="headerGreeting">좋은 아침입니다</span>
                 </div>
+
+                <!-- 내비게이션 -->
                 <nav class="header-nav" aria-label="주요 메뉴">
                     <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">홈</a>
                     <a href="/news" class="nav-link {% if request.url.path == '/news' %}active{% endif %}">아카이브</a>
@@ -35,19 +41,23 @@
         </div>
     </header>
 
+    <!-- 메인 콘텐츠 -->
     <main class="site-main" id="main-content">
         <div class="container">
             {% block content %}{% endblock %}
         </div>
     </main>
 
+    <!-- 푸터 -->
     <footer class="site-footer" role="contentinfo">
         <div class="container">
             <div class="footer-inner">
-                <p class="footer-text">AI 뉴스레터 &mdash; 매일 오전 7시 자동 수집</p>
+                <p class="footer-text">
+                    AI 뉴스레터 &mdash; 매일 오전 7시 자동 수집
+                </p>
                 <div class="footer-actions">
                     <form action="/api/collect" method="post" class="collect-form" id="collectForm">
-                        <button type="submit" class="btn btn-outline btn-sm" id="collectBtn">
+                        <button type="submit" class="btn btn-outline btn-sm" id="collectBtn" aria-label="뉴스 수집 시작">
                             <span class="btn-spinner" aria-hidden="true"></span>
                             <span class="btn-label">지금 수집하기</span>
                         </button>
@@ -59,89 +69,217 @@
         </div>
     </footer>
 
-    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite">
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-label="수집 진행 중">
         <div class="loading-spinner-large" aria-hidden="true"></div>
         <div class="loading-content">
             <div class="loading-icon" id="loadingIcon" aria-hidden="true">📡</div>
             <p class="loading-message" id="loadingMessage">뉴스를 수집하는 중...</p>
             <p class="loading-submessage">잠시만 기다려 주세요 (최대 10분 소요)</p>
             <div class="loading-dots" aria-hidden="true">
-                <div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
             </div>
         </div>
     </div>
 
-    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+    <!-- 토스트 알림 컨테이너 -->
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-label="알림"></div>
 
     <script>
-        (function() {
-            var now = new Date(), hour = now.getHours();
-            var dateEl = document.getElementById('headerDate'), greetEl = document.getElementById('headerGreeting');
-            if (dateEl) dateEl.textContent = now.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+        /* ──────────────────────────────────────────
+           헤더 날짜 & 인사말 (동적)
+        ────────────────────────────────────────── */
+        (function initHeaderDate() {
+            var now  = new Date();
+            var hour = now.getHours();
+
+            var dateEl     = document.getElementById('headerDate');
+            var greetEl    = document.getElementById('headerGreeting');
+
+            if (dateEl) {
+                var opts = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+                dateEl.textContent = now.toLocaleDateString('ko-KR', opts);
+            }
+
             if (greetEl) {
-                var g = '좋은 아침입니다';
-                if (hour >= 12 && hour < 18) g = '좋은 오후입니다';
-                else if (hour >= 18 || hour < 5) g = '좋은 저녁입니다';
-                greetEl.textContent = g;
+                var greeting = '좋은 아침입니다';
+                if (hour >= 12 && hour < 18) greeting = '좋은 오후입니다';
+                else if (hour >= 18 || hour < 5) greeting = '좋은 저녁입니다';
+                greetEl.textContent = greeting;
             }
         })();
 
+        /* ──────────────────────────────────────────
+           토스트 알림 시스템
+        ────────────────────────────────────────── */
         var toastTimers = {};
-        function showToast(opts) {
-            var icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'}, type = opts.type||'info', duration = opts.duration!=null?opts.duration:4500;
-            var id = 'toast-'+Date.now(), el = document.createElement('div');
-            el.className = 'toast toast-'+type; el.id = id; el.setAttribute('role','alert');
-            el.innerHTML = '<span class="toast-icon">'+icons[type]+'</span><div class="toast-body"><p class="toast-title">'+escapeHtml(opts.title||'')+'</p><p class="toast-msg">'+escapeHtml(opts.message||'')+'</p></div><button class="toast-close" onclick="closeToast(\"'+id+'\")">&times;</button>';
-            document.getElementById('toastContainer').appendChild(el);
-            requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add('show'); }); });
-            if (duration > 0) toastTimers[id] = setTimeout(function(){ closeToast(id); }, duration);
-            return id;
-        }
-        function closeToast(id) {
-            var el = document.getElementById(id); if (!el) return;
-            clearTimeout(toastTimers[id]); el.classList.remove('show'); el.classList.add('hide');
-            setTimeout(function(){ el.remove(); }, 350);
-        }
-        function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+        function showToast(opts) {
+            /*
+             * opts = {
+             *   type: 'success' | 'error' | 'info' | 'warning',
+             *   title: string,
+             *   message: string,
+             *   duration: number (ms, 기본 4500)
+             * }
+             */
+            var icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+            var type     = opts.type     || 'info';
+            var duration = opts.duration != null ? opts.duration : 4500;
+
+            var toastId = 'toast-' + Date.now();
+            var icon    = icons[type] || icons.info;
+
+            var toast = document.createElement('div');
+            toast.className  = 'toast toast-' + type;
+            toast.id         = toastId;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML  =
+                '<span class="toast-icon" aria-hidden="true">' + icon + '</span>' +
+                '<div class="toast-body">' +
+                    '<p class="toast-title">' + escapeHtml(opts.title || '') + '</p>' +
+                    '<p class="toast-msg">'   + escapeHtml(opts.message || '') + '</p>' +
+                '</div>' +
+                '<button class="toast-close" aria-label="알림 닫기" onclick="closeToast(\'' + toastId + '\')">&times;</button>';
+
+            document.getElementById('toastContainer').appendChild(toast);
+
+            // 표시 애니메이션 (다음 프레임에서 클래스 추가)
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    toast.classList.add('show');
+                });
+            });
+
+            if (duration > 0) {
+                toastTimers[toastId] = setTimeout(function() {
+                    closeToast(toastId);
+                }, duration);
+            }
+
+            return toastId;
+        }
+
+        function closeToast(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            clearTimeout(toastTimers[id]);
+            el.classList.remove('show');
+            el.classList.add('hide');
+            setTimeout(function() { el.remove(); }, 350);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        /* ──────────────────────────────────────────
+           로딩 오버레이 + 메시지 순환
+        ────────────────────────────────────────── */
         var loadingInterval = null;
-        var STEPS = [{icon:'📡',msg:'뉴스를 수집하는 중...'},{icon:'🔍',msg:'기사를 분석하는 중...'},{icon:'🤖',msg:'AI가 요약하는 중...'},{icon:'💾',msg:'DB에 저장하는 중...'},{icon:'✨',msg:'거의 다 됐어요...'}];
+
+        var LOADING_STEPS = [
+            { icon: '📡', msg: '뉴스를 수집하는 중...' },
+            { icon: '🔍', msg: '기사를 분석하는 중...' },
+            { icon: '🤖', msg: 'AI가 요약하는 중...' },
+            { icon: '💾', msg: 'DB에 저장하는 중...' },
+            { icon: '✨', msg: '거의 다 됐어요...' }
+        ];
+
         function showLoadingOverlay() {
-            var o = document.getElementById('loadingOverlay'), m = document.getElementById('loadingMessage'), i = document.getElementById('loadingIcon');
-            o.classList.add('active'); document.body.style.overflow = 'hidden';
-            var s = 0;
-            if (i) i.textContent = STEPS[0].icon;
-            if (m) m.textContent = STEPS[0].msg;
-            loadingInterval = setInterval(function(){
-                s = (s+1)%STEPS.length;
-                if (i) i.textContent = STEPS[s].icon;
-                if (m) { m.style.opacity='0'; setTimeout(function(){ m.textContent=STEPS[s].msg; m.style.opacity='1'; },200); }
+            var overlay = document.getElementById('loadingOverlay');
+            var msgEl   = document.getElementById('loadingMessage');
+            var iconEl  = document.getElementById('loadingIcon');
+
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            var step = 0;
+            // 즉시 첫 번째 메시지 표시
+            if (iconEl) iconEl.textContent = LOADING_STEPS[0].icon;
+            if (msgEl)  msgEl.textContent  = LOADING_STEPS[0].msg;
+
+            loadingInterval = setInterval(function() {
+                step = (step + 1) % LOADING_STEPS.length;
+                if (iconEl) iconEl.textContent = LOADING_STEPS[step].icon;
+                if (msgEl) {
+                    msgEl.style.opacity = '0';
+                    setTimeout(function() {
+                        msgEl.textContent  = LOADING_STEPS[step].msg;
+                        msgEl.style.opacity = '1';
+                    }, 200);
+                }
             }, 2200);
         }
+
         function hideLoadingOverlay() {
-            clearInterval(loadingInterval); loadingInterval = null;
-            document.getElementById('loadingOverlay').classList.remove('active');
+            clearInterval(loadingInterval);
+            loadingInterval = null;
+            var overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('active');
             document.body.style.overflow = '';
         }
-        function handleCollect(btn) {
-            btn.disabled = true; btn.classList.add('loading');
-            var lbl = btn.querySelector('.btn-label'); if (lbl) lbl.textContent = '수집 중...';
+
+        /* ──────────────────────────────────────────
+           수집 버튼 공통 핸들러
+        ────────────────────────────────────────── */
+        function handleCollect(btn, formId) {
+            // 버튼 로딩 상태
+            btn.disabled = true;
+            btn.classList.add('loading');
+            var labelEl = btn.querySelector('.btn-label');
+            if (labelEl) labelEl.textContent = '수집 중...';
+
             showLoadingOverlay();
-            fetch('/api/collect',{method:'POST'})
-                .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,status:r.status,data:d}; }); })
-                .then(function(r){
+
+            fetch('/api/collect', { method: 'POST' })
+                .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; }); })
+                .then(function(result) {
                     hideLoadingOverlay();
-                    if (r.status===409) showToast({type:'warning',title:'이미 진행 중',message:'수집이 이미 진행 중입니다.'});
-                    else if (r.status===202||r.ok) { showToast({type:'info',title:'수집 시작!',message:r.data.message||'백그라운드에서 수집 중입니다.',duration:7000}); setTimeout(function(){ location.reload(); },12000); }
-                    else showToast({type:'error',title:'수집 오류',message:r.data.detail||'알 수 없는 오류'});
+                    if (result.status === 409) {
+                        showToast({ type: 'warning', title: '이미 진행 중', message: '수집이 이미 진행 중입니다. 잠시 후 다시 시도해주세요.' });
+                    } else if (result.status === 202 || result.ok) {
+                        showToast({
+                            type: 'info',
+                            title: '수집 시작!',
+                            message: result.data.message || '백그라운드에서 수집 중입니다. 잠시 후 새로고침하세요.',
+                            duration: 7000
+                        });
+                        setTimeout(function() { location.reload(); }, 12000);
+                    } else {
+                        showToast({ type: 'error', title: '수집 오류', message: result.data.detail || '알 수 없는 오류가 발생했습니다.' });
+                    }
                 })
-                .catch(function(e){ hideLoadingOverlay(); showToast({type:'error',title:'요청 실패',message:e.message}); })
-                .finally(function(){ btn.disabled=false; btn.classList.remove('loading'); if(lbl) lbl.textContent='지금 수집하기'; });
+                .catch(function(err) {
+                    hideLoadingOverlay();
+                    showToast({ type: 'error', title: '요청 실패', message: err.message });
+                })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                    if (labelEl) labelEl.textContent = '지금 수집하기';
+                });
         }
-        var cf = document.getElementById('collectForm');
-        if (cf) cf.addEventListener('submit', function(e){ e.preventDefault(); handleCollect(document.getElementById('collectBtn')); });
+
+        // 푸터 수집 버튼
+        var collectForm = document.getElementById('collectForm');
+        if (collectForm) {
+            collectForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleCollect(document.getElementById('collectBtn'));
+            });
+        }
+
+        // 빈 상태 수집 버튼 (index.html 내부에서도 동일 함수 호출)
         window.__handleCollect = handleCollect;
     </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

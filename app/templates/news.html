@@ -3,28 +3,48 @@
 {% block title %}뉴스 아카이브 — {{ selected_date }} — AI 뉴스레터{% endblock %}
 
 {% block content %}
+<!-- ── 아카이브 히어로 ── -->
 <section class="page-hero" aria-labelledby="archiveHeroTitle">
     <div class="hero-content">
         <div class="hero-greeting">
-            <span class="hero-weather-emoji">🗂️</span>
+            <span class="hero-weather-emoji" aria-hidden="true">🗂️</span>
             <span class="hero-greeting-text">과거 기사 탐색</span>
         </div>
         <h1 class="hero-title" id="archiveHeroTitle">뉴스 아카이브</h1>
         <p class="hero-subtitle">날짜별로 과거 AI 뉴스를 탐색하세요.</p>
     </div>
+
+    <!-- 날짜 선택기 -->
     <div class="date-picker-wrapper">
         <label for="archiveDatePicker" class="date-label">날짜 선택</label>
-        <input type="date" id="archiveDatePicker" class="date-picker" value="{{ selected_date }}" onchange="location.href='/news?date='+this.value">
+        <input
+            type="date"
+            id="archiveDatePicker"
+            class="date-picker"
+            value="{{ selected_date }}"
+            onchange="location.href='/news?date=' + this.value"
+            aria-label="날짜를 선택하면 해당 날짜 아카이브로 이동합니다"
+        >
     </div>
 </section>
 
+<!-- ── 사이드바 + 기사 목록 ── -->
 <div class="archive-sidebar-layout">
-    <aside class="archive-sidebar">
+    <!-- 날짜 목록 사이드바 -->
+    <aside class="archive-sidebar" aria-label="수집 날짜 목록">
         <h2 class="sidebar-title">수집 날짜</h2>
         {% if available_dates %}
         <ul class="archive-date-list">
             {% for d in available_dates %}
-            <li><a href="/news?date={{ d }}" class="archive-date-link {% if d == selected_date %}active{% endif %}">{{ d }}</a></li>
+            <li class="archive-date-item">
+                <a
+                    href="/news?date={{ d }}"
+                    class="archive-date-link {% if d == selected_date %}active{% endif %}"
+                    {% if d == selected_date %}aria-current="page"{% endif %}
+                >
+                    {{ d }}
+                </a>
+            </li>
             {% endfor %}
         </ul>
         {% else %}
@@ -32,6 +52,7 @@
         {% endif %}
     </aside>
 
+    <!-- 기사 목록 메인 -->
     <div class="archive-main">
         <header class="archive-header">
             <h2 class="archive-date-title">{{ selected_date }}</h2>
@@ -39,38 +60,61 @@
         </header>
 
         {% if articles %}
-        <div class="news-list">
+        <div class="news-list" role="list" aria-label="{{ selected_date }} 기사 목록">
             {% for article in articles %}
             {% set src_key = article.source_name | replace(' ', '-') | lower | truncate(20, False, '') %}
-            <article class="news-list-item">
+            <article class="news-list-item" role="listitem" aria-label="{{ article.source_name }} - {{ article.title }}">
+                <!-- 소스별 컬러바 -->
                 <div class="list-item-colorbar src-{{ src_key }}" aria-hidden="true"></div>
+
                 <div class="list-item-inner">
+                    <!-- 메타: 소스 뱃지 + 시간 -->
                     <div class="list-item-meta">
-                        <span class="source-badge src-{{ src_key }}">{{ article.source_name }}</span>
-                        <time class="card-time">
-                            {% if article.published_at %}{{ article.published_at.strftime('%H:%M') }}
-                            {% else %}{{ article.collected_at.strftime('%H:%M') }}{% endif %}
+                        <span class="source-badge src-{{ src_key }}" title="{{ article.source_name }}">
+                            {{ article.source_name }}
+                        </span>
+                        <time class="card-time" datetime="{{ (article.published_at or article.collected_at).strftime('%Y-%m-%dT%H:%M:%S') }}">
+                            {% if article.published_at %}
+                                {{ article.published_at.strftime('%H:%M') }}
+                            {% else %}
+                                {{ article.collected_at.strftime('%H:%M') }}
+                            {% endif %}
                         </time>
                     </div>
+
+                    <!-- 제목 -->
                     <h3 class="list-item-title">
-                        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer">{{ article.title }}</a>
+                        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer">
+                            {{ article.title }}
+                        </a>
                     </h3>
+
+                    <!-- 요약 -->
                     {% if article.summary_ko %}
                     <p class="list-item-summary">{{ article.summary_ko }}</p>
                     {% elif article.description %}
-                    <p class="list-item-summary description-fallback">{{ article.description[:150] }}{% if article.description|length > 150 %}...{% endif %}</p>
+                    <p class="list-item-summary description-fallback">
+                        {{ article.description[:150] }}{% if article.description|length > 150 %}...{% endif %}
+                    </p>
                     {% endif %}
+
+                    <!-- 푸터 -->
                     <div class="list-item-footer">
-                        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">원문 보기 →</a>
-                        {% if article.is_summarized and article.summary_ko %}<span class="ai-badge">AI 요약</span>{% endif %}
+                        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                            원문 보기 →
+                        </a>
+                        {% if article.is_summarized and article.summary_ko %}
+                        <span class="ai-badge">AI 요약</span>
+                        {% endif %}
                     </div>
                 </div>
             </article>
             {% endfor %}
         </div>
+
         {% else %}
         <div class="empty-state">
-            <div class="empty-icon">📅</div>
+            <div class="empty-icon" aria-hidden="true">📅</div>
             <h3 class="empty-title">이 날짜에 수집된 뉴스가 없습니다</h3>
             <p class="empty-desc">다른 날짜를 선택하거나 홈으로 돌아가세요.</p>
             <a href="/" class="btn btn-primary">홈으로 돌아가기</a>
