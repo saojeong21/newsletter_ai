@@ -76,11 +76,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# 정적 파일 마운트 (디렉토리가 없으면 건너뜀 — serverless 환경 대응)
+# 정적 파일 마운트 (로컬 개발 환경에서만 사용, Vercel은 CDN에서 직접 서빙)
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-else:
-    logger.warning(f"정적 파일 디렉토리 없음, 마운트 건너뜀: {STATIC_DIR}")
 
 # Jinja2 템플릿 엔진 설정
 templates = Jinja2Templates(directory=TEMPLATES_DIR)

@@ -7,13 +7,29 @@
       "config": {
         "maxLambdaSize": "250mb",
         "includeFiles": [
-          "app/**",
-          "api/**"
+          "app/templates/**",
+          "app/summarizer.py",
+          "app/crawler.py",
+          "app/scheduler.py",
+          "app/sources.py",
+          "app/supabase_db.py",
+          "app/__init__.py",
+          "app/main.py",
+          "app/database.py",
+          "app/models.py"
         ]
       }
+    },
+    {
+      "src": "app/static/(.*)",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/app/static/$1"
+    },
     {
       "src": "/(.*)",
       "dest": "/api/index.py"
