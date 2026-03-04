@@ -5,7 +5,11 @@
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "250mb"
+        "maxLambdaSize": "250mb",
+        "includeFiles": [
+          "app/**",
+          "api/**"
+        ]
       }
     }
   ],
