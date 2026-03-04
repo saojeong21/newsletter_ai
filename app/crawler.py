@@ -73,7 +73,7 @@ def _strip_html(html: str) -> str:
     """HTML 태그를 제거하고 순수 텍스트를 반환한다."""
     try:
         from bs4 import BeautifulSoup
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         return soup.get_text(separator=" ", strip=True)
     except Exception:
         # bs4 실패 시 기본 치환

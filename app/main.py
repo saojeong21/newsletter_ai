@@ -39,11 +39,14 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 async def lifespan(app: FastAPI):
     """FastAPI 앱 생명주기 관리.
 
-    startup: 스케줄러 시작
+    startup: 스케줄러 시작 (serverless 환경에서는 무시)
     shutdown: 스케줄러 종료
     """
     logger.info("AI 뉴스레터 서버 시작 중...")
-    start_scheduler()
+    try:
+        start_scheduler()
+    except Exception as e:
+        logger.warning(f"스케줄러 시작 건너뜀 (serverless 환경): {e}")
     logger.info("서버 시작 완료")
 
     yield  # 앱 실행 중
@@ -73,8 +76,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# 정적 파일 마운트
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+# 정적 파일 마운트 (디렉토리가 없으면 건너뜀 — serverless 환경 대응)
+if os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+else:
+    logger.warning(f"정적 파일 디렉토리 없음, 마운트 건너뜀: {STATIC_DIR}")
 
 # Jinja2 템플릿 엔진 설정
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -152,6 +158,19 @@ async def news_archive(
 async def health_check():
     """서버 상태를 반환한다."""
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/debug", summary="배포 환경 디버그")
+async def debug_info():
+    """Vercel 배포 환경 진단용 엔드포인트."""
+    return {
+        "base_dir": BASE_DIR,
+        "templates_dir_exists": os.path.isdir(TEMPLATES_DIR),
+        "static_dir_exists": os.path.isdir(STATIC_DIR),
+        "supabase_url_set": bool(os.getenv("SUPABASE_URL")),
+        "supabase_key_set": bool(os.getenv("SUPABASE_ANON_KEY")),
+        "openrouter_key_set": bool(os.getenv("OPENROUTER_API_KEY")),
+    }
 
 
 @app.get("/api/articles", summary="기사 목록 조회 (JSON)")
