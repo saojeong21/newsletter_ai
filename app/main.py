@@ -37,11 +37,6 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """FastAPI 앱 생명주기 관리.
-
-    startup: 스케줄러 시작 (serverless 환경에서는 무시)
-    shutdown: 스케줄러 종료
-    """
     logger.info("AI 뉴스레터 서버 시작 중...")
     try:
         start_scheduler()
@@ -49,7 +44,7 @@ async def lifespan(app: FastAPI):
         logger.warning(f"스케줄러 시작 건너뜀 (serverless 환경): {e}")
     logger.info("서버 시작 완료")
 
-    yield  # 앱 실행 중
+    yield
 
     logger.info("서버 종료 중...")
     stop_scheduler()
@@ -89,7 +84,6 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # ─────────────────────────────────────────────
 
 def _parse_date_param(date_str: Optional[str]) -> date:
-    """쿼리 파라미터 date 문자열을 date 객체로 변환한다."""
     if date_str:
         try:
             return datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -107,7 +101,6 @@ async def home(
     request: Request,
     date: Optional[str] = None,
 ):
-    """오늘의 AI 뉴스를 카드뷰로 표시한다."""
     target_date = _parse_date_param(date)
     articles = supabase_db.get_articles_by_date(target_date)
     available_dates = supabase_db.get_available_dates()
@@ -131,7 +124,6 @@ async def news_archive(
     request: Request,
     date: Optional[str] = None,
 ):
-    """날짜별 뉴스 아카이브 페이지."""
     target_date = _parse_date_param(date)
     articles = supabase_db.get_articles_by_date(target_date)
     available_dates = supabase_db.get_available_dates()
@@ -154,13 +146,21 @@ async def news_archive(
 
 @app.get("/health", summary="서버 헬스체크")
 async def health_check():
-    """서버 상태를 반환한다."""
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
 
 
 @app.get("/debug", summary="배포 환경 디버그")
 async def debug_info():
     """Vercel 배포 환경 진단용 엔드포인트."""
+    db_test = None
+    db_error = None
+    try:
+        client = supabase_db.get_client()
+        result = client.table("ainewsletter_items").select("id").limit(1).execute()
+        db_test = f"OK (rows: {len(result.data)})"
+    except Exception as e:
+        db_error = f"{type(e).__name__}: {str(e)[:300]}"
+
     return {
         "base_dir": BASE_DIR,
         "templates_dir_exists": os.path.isdir(TEMPLATES_DIR),
@@ -168,12 +168,13 @@ async def debug_info():
         "supabase_url_set": bool(os.getenv("SUPABASE_URL")),
         "supabase_key_set": bool(os.getenv("SUPABASE_ANON_KEY")),
         "openrouter_key_set": bool(os.getenv("OPENROUTER_API_KEY")),
+        "db_test": db_test,
+        "db_error": db_error,
     }
 
 
 @app.get("/api/articles", summary="기사 목록 조회 (JSON)")
 async def get_articles(date: Optional[str] = None):
-    """날짜별 기사 목록을 JSON으로 반환한다."""
     target_date = _parse_date_param(date)
     articles = supabase_db.get_articles_by_date(target_date)
 
@@ -198,7 +199,6 @@ async def get_articles(date: Optional[str] = None):
 
 @app.post("/api/collect", summary="뉴스 수집 수동 트리거")
 async def trigger_collection():
-    """RSS 수집 파이프라인을 즉시 실행한다."""
     if is_collecting():
         raise HTTPException(
             status_code=409,
@@ -230,5 +230,4 @@ async def trigger_collection():
 
 @app.get("/api/stats", summary="수집 통계 조회")
 async def get_stats():
-    """DB에 저장된 기사 통계를 반환한다."""
     return supabase_db.get_stats()
