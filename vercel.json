@@ -1,38 +1,12 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "250mb",
-        "includeFiles": [
-          "app/templates/**",
-          "app/summarizer.py",
-          "app/crawler.py",
-          "app/scheduler.py",
-          "app/sources.py",
-          "app/supabase_db.py",
-          "app/__init__.py",
-          "app/main.py",
-          "app/database.py",
-          "app/models.py"
-        ]
-      }
-    },
-    {
-      "src": "app/static/(.*)",
-      "use": "@vercel/static"
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "memory": 1024,
+      "includeFiles": "app/**"
     }
-  ],
-  "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "/app/static/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/api/index.py"
-    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index.py" }
   ]
 }
