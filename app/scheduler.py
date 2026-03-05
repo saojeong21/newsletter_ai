@@ -57,18 +57,28 @@ async def _async_collection_pipeline() -> dict:
     Returns:
         dict: 수집 및 요약 결과 집계
     """
+    import asyncio
     from app.crawler import fetch_all_feeds
     from app.summarizer import summarize_unsummarized_articles
 
-    # 1단계: RSS 피드 수집
-    logger.info("1단계: RSS 피드 수집 시작")
-    crawl_result = fetch_all_feeds()
-    logger.info(f"RSS 수집 결과: {crawl_result}")
+    global _is_collecting
+    with _collection_lock:
+        _is_collecting = True
 
-    # 2단계: AI 요약 생성
-    logger.info("2단계: AI 요약 생성 시작")
-    summary_result = await summarize_unsummarized_articles()
-    logger.info(f"요약 결과: {summary_result}")
+    try:
+        # 1단계: RSS 피드 수집 (동기 함수를 스레드풀에서 실행)
+        logger.info("1단계: RSS 피드 수집 시작")
+        loop = asyncio.get_event_loop()
+        crawl_result = await loop.run_in_executor(None, fetch_all_feeds)
+        logger.info(f"RSS 수집 결과: {crawl_result}")
+
+        # 2단계: AI 요약 생성
+        logger.info("2단계: AI 요약 생성 시작")
+        summary_result = await summarize_unsummarized_articles()
+        logger.info(f"요약 결과: {summary_result}")
+    finally:
+        with _collection_lock:
+            _is_collecting = False
 
     return {
         "crawl": crawl_result,

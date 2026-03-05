@@ -205,27 +205,28 @@ async def trigger_collection():
             detail="이미 수집이 진행 중입니다. 완료 후 다시 시도하세요.",
         )
 
-    import threading
+    from app.scheduler import _async_collection_pipeline
 
-    result_container = {}
-    error_container = {}
+    try:
+        result = await _async_collection_pipeline()
+        return {"status": "completed", "result": result}
+    except Exception as e:
+        logger.error(f"수집 오류: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
-    def _run():
-        try:
-            result_container["result"] = run_collection_now()
-        except Exception as e:
-            error_container["error"] = str(e)
 
-    thread = threading.Thread(target=_run, daemon=True)
-    thread.start()
+@app.post("/api/summarize", summary="AI 요약 수동 트리거")
+@app.get("/api/summarize", summary="AI 요약 수동 트리거 (GET — Vercel Cron용)")
+async def trigger_summarization(limit: int = 10):
+    """미요약 기사에 대한 AI 요약을 생성한다. limit으로 처리 건수 제한 (기본 10)."""
+    from app.summarizer import summarize_unsummarized_articles
 
-    return JSONResponse(
-        status_code=202,
-        content={
-            "status": "accepted",
-            "message": "뉴스 수집이 시작되었습니다. 완료까지 최대 10분 소요됩니다.",
-        },
-    )
+    try:
+        result = await summarize_unsummarized_articles(limit=limit)
+        return {"status": "completed", "result": result}
+    except Exception as e:
+        logger.error(f"요약 오류: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/stats", summary="수집 통계 조회")
