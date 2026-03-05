@@ -37,12 +37,12 @@ REQUEST_DELAY_SECONDS = 1.5
 API_TIMEOUT_SECONDS = 30
 
 # 요약 프롬프트 템플릿
-SUMMARY_PROMPT_TEMPLATE = """다음 뉴스 기사를 한국어로 간결하게 요약해주세요. 핵심 내용만 150~200자로 작성하세요.
+SUMMARY_PROMPT_TEMPLATE = """다음 뉴스 기사를 한국어로 핵심 내용만 3줄로 요약해주세요. 각 줄은 완결된 문장으로 작성하세요.
 
 제목: {title}
 내용: {content}
 
-요약:"""
+요약 (3줄):"""
 
 
 async def _call_openrouter(
