@@ -229,6 +229,18 @@ async def trigger_summarization(limit: int = 10):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/cron/collect", summary="Vercel Cron — 매일 오전 7시(KST) 자동 수집")
+async def cron_collect():
+    """Vercel Cron Job에서 호출. 뉴스 수집 + AI 요약을 순차 실행한다."""
+    from app.scheduler import _async_collection_pipeline
+    try:
+        result = await _async_collection_pipeline()
+        return {"status": "completed", "result": result}
+    except Exception as e:
+        logger.error(f"크론 수집 오류: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/stats", summary="수집 통계 조회")
 async def get_stats():
     return supabase_db.get_stats()
