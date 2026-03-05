@@ -200,10 +200,11 @@ async def summarize_article(
     return None
 
 
-async def summarize_unsummarized_articles() -> dict:
-    """DB에서 요약되지 않은 기사를 모두 찾아 요약을 생성하고 저장한다.
+async def summarize_unsummarized_articles(limit: int = 50) -> dict:
+    """DB에서 요약되지 않은 기사를 찾아 요약을 생성하고 저장한다.
 
     기사 간 딜레이를 적용하여 rate limit을 회피한다.
+    limit 파라미터로 1회 실행 시 최대 처리 건수를 제한한다 (기본 50건).
 
     Returns:
         dict: 처리 결과 집계
@@ -211,6 +212,8 @@ async def summarize_unsummarized_articles() -> dict:
     start_time = time.time()
 
     articles = supabase_db.get_unsummarized_articles()
+    if limit:
+        articles = articles[:limit]
 
     total = len(articles)
     success_count = 0
