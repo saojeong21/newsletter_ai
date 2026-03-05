@@ -23,7 +23,7 @@ def _base_url() -> str:
 
 
 def _headers() -> dict:
-    key = os.getenv("SUPABASE_ANON_KEY", "")
+    key = os.getenv("SUPABASE_ANON_KEY", "").strip()
     return {
         "apikey": key,
         "Authorization": f"Bearer {key}",
