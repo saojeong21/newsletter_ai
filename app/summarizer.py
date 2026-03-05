@@ -24,14 +24,10 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 # rate limit 또는 에러 발생 시 순서대로 다음 모델로 자동 전환.
 # 한국어 지원 품질 우수 모델을 상위에 배치.
 FREE_MODELS = [
-    "openai/gpt-oss-120b:free",                         # OpenAI 오픈소스 120B — 최고 품질
+    "google/gemma-3-27b-it:free",                       # Gemma 27B — 주력 (검증됨)
+    "google/gemma-3-12b-it:free",                       # Gemma 12B — 폴백 (검증됨)
     "meta-llama/llama-3.3-70b-instruct:free",           # Llama 70B — 한국어 우수
-    "qwen/qwen3-next-80b-a3b-instruct:free",            # Qwen3 80B — 다국어 강세
-    "upstage/solar-pro-3:free",                         # Upstage Solar — 한국어 특화
-    "google/gemma-3-27b-it:free",                       # Gemma 27B — 다국어
-    "mistralai/mistral-small-3.1-24b-instruct:free",    # Mistral 24B — 유럽어/영어
-    "google/gemma-3-12b-it:free",                       # Gemma 12B — 경량 폴백
-    "openai/gpt-oss-20b:free",                          # OpenAI 오픈소스 20B
+    "mistralai/mistral-small-3.1-24b-instruct:free",    # Mistral 24B — 경량 폴백
 ]
 
 # 기사 간 요청 딜레이 (초) — rate limit 회피
@@ -213,12 +209,9 @@ async def summarize_unsummarized_articles(limit: int = 50) -> dict:
 
     all_articles = supabase_db.get_unsummarized_articles()
 
-    # 한도 초과 기사는 요약 없이 is_summarized=True로 표시하여 영구 무시
+    # 한도 초과 기사는 이번 실행에서 건너뜀 (마킹 없이 — 다음 실행에서 재시도)
     if limit and len(all_articles) > limit:
-        skipped = all_articles[limit:]
-        logger.info(f"한도 초과 기사 {len(skipped)}건 무시 처리")
-        for article in skipped:
-            supabase_db.update_summary(article.id, None)
+        logger.info(f"미요약 기사 {len(all_articles)}건 중 최신 {limit}건만 처리")
         articles = all_articles[:limit]
     else:
         articles = all_articles
@@ -240,15 +233,17 @@ async def summarize_unsummarized_articles(limit: int = 50) -> dict:
             article_id=article.id,
         )
 
-        ok = supabase_db.update_summary(article.id, summary)
-        if ok:
-            if summary:
+        if summary:
+            # 요약 성공 시만 DB 업데이트 (실패 시 is_summarized=False 유지 → 다음 실행에서 재시도)
+            ok = supabase_db.update_summary(article.id, summary)
+            if ok:
                 success_count += 1
             else:
+                logger.error(f"[Article #{article.id}] DB 업데이트 실패")
                 fail_count += 1
         else:
-            logger.error(f"[Article #{article.id}] DB 업데이트 실패")
             fail_count += 1
+            logger.warning(f"[Article #{article.id}] 모든 모델 실패 — 다음 실행에서 재시도")
 
         # 기사 간 딜레이 — rate limit 회피
         if idx < total:
