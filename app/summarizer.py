@@ -211,9 +211,17 @@ async def summarize_unsummarized_articles(limit: int = 50) -> dict:
     """
     start_time = time.time()
 
-    articles = supabase_db.get_unsummarized_articles()
-    if limit:
-        articles = articles[:limit]
+    all_articles = supabase_db.get_unsummarized_articles()
+
+    # 한도 초과 기사는 요약 없이 is_summarized=True로 표시하여 영구 무시
+    if limit and len(all_articles) > limit:
+        skipped = all_articles[limit:]
+        logger.info(f"한도 초과 기사 {len(skipped)}건 무시 처리")
+        for article in skipped:
+            supabase_db.update_summary(article.id, None)
+        articles = all_articles[:limit]
+    else:
+        articles = all_articles
 
     total = len(articles)
     success_count = 0
