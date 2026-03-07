@@ -9,16 +9,27 @@
     <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- 에디션 바 -->
+    <div class="edition-bar" aria-label="에디션 정보">
+        <div class="edition-bar-inner">
+            <span>AI 뉴스레터</span>
+            <span class="edition-sep">•</span>
+            <span id="editionDate">매일 오전 7시 발행</span>
+            <span class="edition-sep">•</span>
+            <span>국내외 AI 최신 뉴스</span>
+        </div>
+    </div>
+
     <!-- 헤더 -->
     <header class="site-header" role="banner">
         <div class="container">
             <div class="header-inner">
                 <!-- 로고 -->
                 <a href="/" class="logo" aria-label="AI 뉴스레터 홈으로 이동">
-                    <span class="logo-icon" aria-hidden="true">☀️</span>
+                    <span class="logo-icon" aria-hidden="true">☕</span>
                     <div class="logo-text">
                         <span class="logo-title">AI 뉴스레터</span>
                         <span class="logo-subtitle">매일 오전 7시 자동 수집</span>
@@ -88,6 +99,18 @@
     <div class="toast-container" id="toastContainer" aria-live="polite" aria-label="알림"></div>
 
     <script>
+        /* ──────────────────────────────────────────
+           에디션 바 날짜 (동적)
+        ────────────────────────────────────────── */
+        (function initEditionDate() {
+            var el = document.getElementById('editionDate');
+            if (el) {
+                var now = new Date();
+                var opts = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+                el.textContent = now.toLocaleDateString('ko-KR', opts);
+            }
+        })();
+
         /* ──────────────────────────────────────────
            헤더 날짜 & 인사말 (동적)
         ────────────────────────────────────────── */
