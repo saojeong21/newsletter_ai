@@ -626,10 +626,6 @@ img {
     color: var(--color-text-sub);
     line-height: 1.75;
     letter-spacing: 0.01em;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
 .description-fallback {
@@ -1278,10 +1274,6 @@ img {
     color: var(--color-text-sub);
     line-height: 1.75;
     letter-spacing: 0.01em;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
 .list-item-footer {
