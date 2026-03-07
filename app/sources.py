@@ -25,7 +25,7 @@ RSS_SOURCES: List[RSSSource] = [
     ),
     RSSSource(
         name="VentureBeat AI",
-        url="https://venturebeat.com/category/ai/feed/",
+        url="https://feeds.feedburner.com/venturebeat/SZYF",  # feedburner URL로 교체 (2026-03)
         category="해외 AI",
     ),
     RSSSource(
@@ -42,11 +42,13 @@ RSS_SOURCES: List[RSSSource] = [
         name="Anthropic News",
         url="https://www.anthropic.com/news/rss",
         category="해외 AI",
+        enabled=False,  # 404 — RSS 피드 미제공
     ),
     RSSSource(
         name="OpenAI Blog",
         url="https://openai.com/blog/rss/",
         category="해외 AI",
+        enabled=False,  # 403 Forbidden — RSS 피드 차단됨
     ),
     RSSSource(
         name="MIT Technology Review AI",
@@ -57,17 +59,35 @@ RSS_SOURCES: List[RSSSource] = [
         name="Wired AI",
         url="https://www.wired.com/feed/category/artificial-intelligence/latest/rss",
         category="해외 AI",
+        enabled=False,  # 404 — RSS 피드 URL 변경됨
+    ),
+    RSSSource(
+        name="Hugging Face Blog",
+        url="https://huggingface.co/blog/feed.xml",
+        category="해외 AI",
+    ),
+    RSSSource(
+        name="AI News",
+        url="https://www.artificialintelligence-news.com/feed/",
+        category="해외 AI",
+    ),
+    RSSSource(
+        name="Ars Technica AI",
+        url="https://feeds.arstechnica.com/arstechnica/technology-lab",
+        category="해외 AI",
     ),
     # ===== 국내 IT/AI 뉴스 =====
     RSSSource(
         name="ZDNet Korea",
         url="https://zdnet.co.kr/rss/rss.aspx",
         category="국내 IT",
+        enabled=False,  # 404 — 피드 URL 변경됨
     ),
     RSSSource(
         name="전자신문",
         url="https://www.etnews.com/rss/",
         category="국내 IT",
+        enabled=False,  # XML 파싱 오류 (undefined entity)
     ),
     RSSSource(
         name="AI타임스",
@@ -109,6 +129,8 @@ AI_NATIVE_SOURCES = {
     "Google AI Blog",
     "Anthropic News",
     "OpenAI Blog",
+    "Hugging Face Blog",
+    "AI News",
     "AI타임스",
 }
 

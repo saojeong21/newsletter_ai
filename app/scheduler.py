@@ -72,9 +72,9 @@ async def _async_collection_pipeline() -> dict:
         crawl_result = await loop.run_in_executor(None, fetch_all_feeds)
         logger.info(f"RSS 수집 결과: {crawl_result}")
 
-        # 2단계: AI 요약 생성
+        # 2단계: AI 요약 생성 (Vercel maxDuration=300초 내 완료 가능하도록 limit 제한)
         logger.info("2단계: AI 요약 생성 시작")
-        summary_result = await summarize_unsummarized_articles()
+        summary_result = await summarize_unsummarized_articles(limit=20)
         logger.info(f"요약 결과: {summary_result}")
     finally:
         with _collection_lock:
