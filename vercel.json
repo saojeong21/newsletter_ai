@@ -6,17 +6,13 @@
       "schedule": "0 22 * * *"
     }
   ],
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 300
-    }
-  },
   "builds": [
     {
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "250mb",
+        "maxDuration": 300,
         "includeFiles": ["app/**"]
       }
     },
