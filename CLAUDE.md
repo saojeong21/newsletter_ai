@@ -91,9 +91,15 @@ Newsletter/
   - `.summary-text`, `.list-item-summary`에서 `-webkit-line-clamp` 제거
   - AI 3줄 요약이 줄바꿈 포함 시 4줄 이상이 되면 잘리는 문제 수정
 
+### 6차 (2026-03-08): Vercel 배포 수동 복구 + vercel.json 충돌 수정
+- **배포 누락 원인 확인**: Morning Brew UI 커밋(19:50~19:51 KST)이 GitHub에 push됐으나 Vercel GitHub 통합이 자동 배포를 트리거하지 않음
+- **vercel.json 충돌 수정**: `functions` + `builds` 동시 사용 불가 오류 → `functions` 블록 제거, `maxDuration: 300`을 `builds.config` 내로 이동
+- **수동 배포 완료**: `vercel --prod` CLI로 최신 UI 코드 Production 배포
+- **GitHub 자동 배포 복구**: vercel.json 수정 후 push → Vercel GitHub 통합 정상 재작동 확인
+
 ---
 
-## 현재 상태 (2026-03-07 기준)
+## 현재 상태 (2026-03-08 기준)
 
 | 항목 | 상태 |
 |---|---|
