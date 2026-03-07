@@ -39,9 +39,13 @@ Newsletter/
 │   ├── sources.py        ← RSS 소스 목록 + AI 키워드 (활성 10개 / 비활성 5개)
 │   ├── templates/        ← base.html, index.html, news.html
 │   └── static/           ← style.css, favicon.svg
+├── public/static/        ← Vercel CDN 서빙용 정적 파일 (style.css, favicon.svg)
 ├── Newsletter_AI.html    ← 브라우저 미리보기용 정적 HTML
 └── PRD.md                ← 상품 기획 문서
 ```
+
+> **주의**: CSS/정적 파일 수정 시 `app/static/`과 `public/static/` **양쪽 모두** 업데이트해야 함.
+> Vercel이 `/static/*` 요청을 `public/static/`으로 직접 라우팅하므로 `app/static/`만 수정하면 배포에 반영되지 않음.
 
 ---
 
