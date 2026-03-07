@@ -230,8 +230,18 @@ async def trigger_summarization(limit: int = 10):
 
 
 @app.get("/api/cron/collect", summary="Vercel Cron — 매일 오전 7시(KST) 자동 수집")
-async def cron_collect():
-    """Vercel Cron Job에서 호출. 뉴스 수집 + AI 요약을 순차 실행한다."""
+async def cron_collect(request: Request):
+    """Vercel Cron Job에서 호출. 뉴스 수집 + AI 요약을 순차 실행한다.
+
+    CRON_SECRET 환경변수가 설정된 경우 Authorization 헤더로 인증한다.
+    Vercel Cron은 자동으로 Authorization: Bearer {CRON_SECRET} 헤더를 전송한다.
+    """
+    cron_secret = os.getenv("CRON_SECRET", "")
+    if cron_secret:
+        auth_header = request.headers.get("authorization", "")
+        if auth_header != f"Bearer {cron_secret}":
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
     from app.scheduler import _async_collection_pipeline
     try:
         result = await _async_collection_pipeline()
