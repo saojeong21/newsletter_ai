@@ -138,6 +138,35 @@ Newsletter/
 
 ---
 
+## Vercel 배포 설정 원칙 (절대 변경 금지)
+
+### vercel.json 포맷: `builds` 사용 (`functions` 사용 불가)
+
+이 프로젝트는 반드시 `builds` 포맷을 사용해야 한다. `functions` 포맷으로 전환 시 항상 빌드 오류 발생.
+
+**`functions` 포맷이 실패하는 이유 (실증됨):**
+- `api/index.py`가 `from app.main import app` 한 줄만 있는 re-export 구조 → Vercel이 서버리스 함수로 자동 인식 불가
+- 모든 요청을 `api/index.py`로 redirect하는 커스텀 `routes` 설정과 충돌
+- `@vercel/python` 빌더 없이는 FastAPI ASGI 앱 구조 처리 불가
+
+**오류 메시지 (보면 `functions` 포맷 썼다는 뜻):**
+```
+The pattern "api/index.py" defined in `functions` doesn't match any Serverless Functions
+```
+
+**올바른 구조:**
+```json
+"builds": [{ "src": "api/index.py", "use": "@vercel/python", "config": {...} }]
+```
+빌드 시 `WARN! Due to builds existing...` 경고는 무해함 — 무시할 것.
+
+### Vercel 플랜 제한 (Hobby)
+- 함수 최대 실행 시간: **60초** (`maxDuration: 300` 설정해도 Hobby에선 60초 적용)
+- Cron Job: 하루 1회, 크론 당 60초 제한
+- 수집(~35초)과 요약(~45초)을 **반드시 별도 크론**으로 분리해야 함
+
+---
+
 ## 미해결 이슈
 
 1. **비활성 소스 URL 재확인** — Anthropic/OpenAI RSS는 향후 공식 지원 시 재활성화 필요

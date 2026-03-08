@@ -10,12 +10,21 @@
       "schedule": "20 22 * * *"
     }
   ],
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 60,
-      "includeFiles": "app/**"
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "250mb",
+        "maxDuration": 60,
+        "includeFiles": ["app/**"]
+      }
+    },
+    {
+      "src": "public/static/**",
+      "use": "@vercel/static"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/static/(.*)",
