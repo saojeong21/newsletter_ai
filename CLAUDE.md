@@ -18,7 +18,7 @@ GitHub: `https://github.com/saojeong21/newsletter_ai`
 | AI 요약 | OpenRouter 무료 모델 폴백 (gemma-3-27b → gemma-3-12b → llama-3.3-70b → mistral-small) |
 | 뉴스 수집 | feedparser RSS (활성 10개 소스, 국내외 AI 기사) |
 | 배포 | Vercel 서버리스 |
-| 자동 수집 | Vercel Cron Job (매일 UTC 22:00 = KST 07:00) |
+| 자동 수집 | Vercel Cron 2개: 수집(UTC 22:00/KST 07:00) + 요약(UTC 22:20/KST 07:20) |
 
 ---
 
@@ -29,7 +29,7 @@ Newsletter/
 ├── api/index.py          ← Vercel 진입점 (from app.main import app)
 ├── vercel.json           ← Vercel 빌드/라우팅/Cron 설정
 ├── app/
-│   ├── main.py           ← FastAPI 라우터 (/api/collect, /api/summarize, /api/cron/collect 등)
+│   ├── main.py           ← FastAPI 라우터 (/api/cron/collect, /api/cron/summarize 등)
 │   ├── models.py         ← SQLAlchemy 모델 (Article)
 │   ├── database.py       ← SQLite 연결 (로컬 fallback용, 실서버는 Supabase)
 │   ├── supabase_db.py    ← Supabase httpx 직접 호출 (supabase-py 대신)
@@ -95,6 +95,14 @@ Newsletter/
   - `.summary-text`, `.list-item-summary`에서 `-webkit-line-clamp` 제거
   - AI 3줄 요약이 줄바꿈 포함 시 4줄 이상이 되면 잘리는 문제 수정
 
+### 7차 (2026-03-08): Vercel Cron 미작동 원인 분석 및 수정
+- **원인**: Hobby 플랜 함수 실행 한도 60초, 기존 단일 파이프라인(수집+요약 ~125초) 초과로 크론 강제 종료
+- **vercel.json 수정**: `maxDuration: 300→60`, 크론 2개로 분리
+  - `/api/cron/collect` (UTC 22:00): RSS 수집 전용 ~35초
+  - `/api/cron/summarize` (UTC 22:20): AI 요약 전용 limit=10, ~45초
+- **main.py**: `_verify_cron_secret()` 헬퍼 추출, `/api/cron/summarize` 엔드포인트 신규 추가
+- **CLAUDE.md**: `builds` vs `functions` 포맷 분석 결과 영구 기록
+
 ### 6차 (2026-03-08): Vercel 배포 수동 복구 + vercel.json 충돌 수정
 - **배포 누락 원인 확인**: Morning Brew UI 커밋(19:50~19:51 KST)이 GitHub에 push됐으나 Vercel GitHub 통합이 자동 배포를 트리거하지 않음
 - **vercel.json 충돌 수정**: `functions` + `builds` 동시 사용 불가 오류 → `functions` 블록 제거, `maxDuration: 300`을 `builds.config` 내로 이동
@@ -110,9 +118,9 @@ Newsletter/
 | Supabase 연결 | 정상 |
 | 전체 기사 수 | 251건 |
 | 요약 완료 | 80건 (32%) |
-| 미요약 누적 | 171건 — Cron 실행 시 20건씩 자동 처리 |
+| 미요약 누적 | 171건 — 요약 크론 실행 시 10건씩 자동 처리 |
 | 활성 RSS 소스 | 10개 (비활성 5개) |
-| Vercel Cron 설정 | `0 22 * * *` (KST 07:00) 정상 |
+| Vercel Cron | 수집 `0 22 * * *` / 요약 `20 22 * * *` — 내일 07:00 KST 첫 실행 예정 |
 
 ---
 
