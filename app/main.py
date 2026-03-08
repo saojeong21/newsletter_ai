@@ -229,25 +229,54 @@ async def trigger_summarization(limit: int = 10):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/cron/collect", summary="Vercel Cron — 매일 오전 7시(KST) 자동 수집")
-async def cron_collect(request: Request):
-    """Vercel Cron Job에서 호출. 뉴스 수집 + AI 요약을 순차 실행한다.
-
-    CRON_SECRET 환경변수가 설정된 경우 Authorization 헤더로 인증한다.
-    Vercel Cron은 자동으로 Authorization: Bearer {CRON_SECRET} 헤더를 전송한다.
-    """
+def _verify_cron_secret(request: Request):
+    """Vercel Cron Secret 인증 헬퍼. CRON_SECRET 환경변수가 설정된 경우 검증한다."""
     cron_secret = os.getenv("CRON_SECRET", "")
     if cron_secret:
         auth_header = request.headers.get("authorization", "")
         if auth_header != f"Bearer {cron_secret}":
             raise HTTPException(status_code=401, detail="Unauthorized")
 
-    from app.scheduler import _async_collection_pipeline
+
+@app.get("/api/cron/collect", summary="Vercel Cron — 매일 오전 7시(KST) RSS 수집")
+async def cron_collect(request: Request):
+    """Vercel Cron Job에서 호출 (UTC 22:00 = KST 07:00). RSS 수집만 실행한다.
+
+    Hobby 플랜 60초 제한 내 완료되도록 수집 단독 실행.
+    요약은 20분 후 /api/cron/summarize가 별도로 처리한다.
+    """
+    _verify_cron_secret(request)
+
+    import asyncio
+    from app.crawler import fetch_all_feeds
+
     try:
-        result = await _async_collection_pipeline()
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, fetch_all_feeds)
+        logger.info(f"크론 수집 완료: {result}")
         return {"status": "completed", "result": result}
     except Exception as e:
         logger.error(f"크론 수집 오류: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/cron/summarize", summary="Vercel Cron — 매일 오전 7시 20분(KST) AI 요약")
+async def cron_summarize(request: Request):
+    """Vercel Cron Job에서 호출 (UTC 22:20 = KST 07:20). 미요약 기사 AI 요약 실행.
+
+    Hobby 플랜 60초 제한 내 완료되도록 limit=10으로 제한.
+    누적 미요약 기사는 매일 10건씩 자동 처리된다.
+    """
+    _verify_cron_secret(request)
+
+    from app.summarizer import summarize_unsummarized_articles
+
+    try:
+        result = await summarize_unsummarized_articles(limit=10)
+        logger.info(f"크론 요약 완료: {result}")
+        return {"status": "completed", "result": result}
+    except Exception as e:
+        logger.error(f"크론 요약 오류: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

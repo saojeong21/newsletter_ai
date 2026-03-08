@@ -4,23 +4,19 @@
     {
       "path": "/api/cron/collect",
       "schedule": "0 22 * * *"
-    }
-  ],
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "250mb",
-        "maxDuration": 300,
-        "includeFiles": ["app/**"]
-      }
     },
     {
-      "src": "public/static/**",
-      "use": "@vercel/static"
+      "path": "/api/cron/summarize",
+      "schedule": "20 22 * * *"
     }
   ],
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.12",
+      "maxDuration": 60,
+      "includeFiles": "app/**"
+    }
+  },
   "routes": [
     {
       "src": "/static/(.*)",
