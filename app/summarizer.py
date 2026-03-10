@@ -23,15 +23,18 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 # 무료 모델 우선순위 목록 (OpenRouter 실제 가용 모델 기준, 2026-03 확인)
 # rate limit 또는 에러 발생 시 순서대로 다음 모델로 자동 전환.
 # 한국어 지원 품질 우수 모델을 상위에 배치.
+# 서로 다른 공급사 모델로 분산 → 동시 rate limit 방지
 FREE_MODELS = [
-    "google/gemma-3-27b-it:free",                       # Gemma 27B — 주력 (검증됨)
-    "google/gemma-3-12b-it:free",                       # Gemma 12B — 폴백 (검증됨)
-    "meta-llama/llama-3.3-70b-instruct:free",           # Llama 70B — 한국어 우수
-    "mistralai/mistral-small-3.1-24b-instruct:free",    # Mistral 24B — 경량 폴백
+    "google/gemma-3-27b-it:free",                           # Gemma 27B — 주력 (Google)
+    "meta-llama/llama-3.3-70b-instruct:free",               # Llama 70B — 한국어 우수 (Meta)
+    "qwen/qwen3-next-80b-a3b-instruct:free",                # Qwen3 80B — 한국어 우수 (Alibaba)
+    "nousresearch/hermes-3-llama-3.1-405b:free",            # Hermes 405B (NousResearch/Meta)
+    "google/gemma-3-12b-it:free",                           # Gemma 12B — 경량 (Google)
+    "mistralai/mistral-small-3.1-24b-instruct:free",        # Mistral 24B — 마지막 폴백
 ]
 
-# 기사 간 요청 딜레이 (초) — rate limit 회피
-REQUEST_DELAY_SECONDS = 1.5
+# 기사 간 요청 딜레이 (초) — rate limit reset 여유 확보 (3초)
+REQUEST_DELAY_SECONDS = 3.0
 
 # API 요청 타임아웃 (초)
 API_TIMEOUT_SECONDS = 30
@@ -181,7 +184,7 @@ async def summarize_article(
                 )
                 # 폴백: 다음 모델로 계속
                 if i < len(FREE_MODELS) - 1:
-                    await asyncio.sleep(1)  # 잠시 대기 후 다음 모델 시도
+                    await asyncio.sleep(1)
                 continue
 
             except httpx.TimeoutException:

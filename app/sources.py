@@ -35,7 +35,7 @@ RSS_SOURCES: List[RSSSource] = [
     ),
     RSSSource(
         name="Google AI Blog",
-        url="https://blog.google/technology/ai/rss/",
+        url="https://blog.google/innovation-and-ai/technology/ai/rss/",  # 301 리다이렉트 최종 URL (2026-03-10 수정)
         category="해외 AI",
     ),
     RSSSource(
@@ -131,6 +131,7 @@ AI_NATIVE_SOURCES = {
     "OpenAI Blog",
     "Hugging Face Blog",
     "AI News",
+    "Ars Technica AI",  # AI/기술 전문 피드 — 키워드 필터링 제외 (2026-03-10 추가)
     "AI타임스",
 }
 

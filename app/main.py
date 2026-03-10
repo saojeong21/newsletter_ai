@@ -264,15 +264,16 @@ async def cron_collect(request: Request):
 async def cron_summarize(request: Request):
     """Vercel Cron Job에서 호출 (UTC 22:20 = KST 07:20). 미요약 기사 AI 요약 실행.
 
-    Hobby 플랜 60초 제한 내 완료되도록 limit=10으로 제한.
-    누적 미요약 기사는 매일 10건씩 자동 처리된다.
+    Hobby 플랜 60초 제한: limit=5로 제한.
+    기사당 평균 10초 × 5건 + 딜레이 4 × 2초 = ~58초 (60초 이내 안전).
+    누적 미요약 기사는 매일 5건씩 자동 처리된다.
     """
     _verify_cron_secret(request)
 
     from app.summarizer import summarize_unsummarized_articles
 
     try:
-        result = await summarize_unsummarized_articles(limit=10)
+        result = await summarize_unsummarized_articles(limit=5)
         logger.info(f"크론 요약 완료: {result}")
         return {"status": "completed", "result": result}
     except Exception as e:
