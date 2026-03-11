@@ -1,0 +1,40 @@
+name: Daily News Cron
+
+on:
+  schedule:
+    - cron: '0 22 * * *'   # UTC 22:00 = KST 07:00
+  workflow_dispatch:        # 수동 실행 허용
+
+jobs:
+  collect:
+    name: RSS 수집
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/collect
+        run: |
+          STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://newsletter-ai-saojeong21s-projects.vercel.app/api/cron/collect)
+          echo "HTTP Status: $STATUS"
+          echo "Response: $(cat /tmp/response.txt)"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::수집 크론 실패 (HTTP $STATUS)"
+            exit 1
+          fi
+
+  summarize:
+    name: AI 요약
+    needs: collect
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/summarize
+        run: |
+          STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://newsletter-ai-saojeong21s-projects.vercel.app/api/cron/summarize)
+          echo "HTTP Status: $STATUS"
+          echo "Response: $(cat /tmp/response.txt)"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::요약 크론 실패 (HTTP $STATUS)"
+            exit 1
+          fi
