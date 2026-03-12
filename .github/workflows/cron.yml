@@ -14,6 +14,7 @@ jobs:
         run: |
           STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_BYPASS_SECRET }}" \
             https://newsletter-ai-saojeong21s-projects.vercel.app/api/cron/collect)
           echo "HTTP Status: $STATUS"
           echo "Response: $(cat /tmp/response.txt)"
@@ -31,6 +32,7 @@ jobs:
         run: |
           STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_BYPASS_SECRET }}" \
             https://newsletter-ai-saojeong21s-projects.vercel.app/api/cron/summarize)
           echo "HTTP Status: $STATUS"
           echo "Response: $(cat /tmp/response.txt)"
