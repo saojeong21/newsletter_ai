@@ -32,6 +32,20 @@ def _headers() -> dict:
     }
 
 
+def _service_headers() -> dict:
+    """쓰기 작업(INSERT/UPDATE/DELETE)에 사용 — service_role key 필요."""
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if not key:
+        # fallback: anon key (로컬 개발 등 service key 미설정 시)
+        key = os.getenv("SUPABASE_ANON_KEY", "").strip()
+    return {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+    }
+
+
 def _client() -> httpx.Client:
     return httpx.Client(http2=False, timeout=30)
 
@@ -91,7 +105,7 @@ def save_article(data: dict) -> Optional[ArticleRow]:
     with _client() as c:
         resp = c.post(
             f"{_base_url()}/{TABLE}",
-            headers=_headers(),
+            headers=_service_headers(),
             json=data,
         )
         resp.raise_for_status()
@@ -138,7 +152,7 @@ def update_summary(article_id: int, summary_ko: Optional[str]) -> bool:
     with _client() as c:
         resp = c.patch(
             f"{_base_url()}/{TABLE}",
-            headers=_headers(),
+            headers=_service_headers(),
             params={"id": f"eq.{article_id}"},
             json={"summary_ko": summary_ko, "is_summarized": True},
         )
