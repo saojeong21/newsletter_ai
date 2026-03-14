@@ -27,7 +27,7 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 FREE_MODELS = [
     "google/gemma-3-27b-it:free",                           # Gemma 27B — 주력 (Google)
     "meta-llama/llama-3.3-70b-instruct:free",               # Llama 70B — 한국어 우수 (Meta)
-    "openai/gpt-oss-20b:free",                              # GPT OSS 20B — 경량·빠름 (OpenAI)
+    "qwen/qwen3-next-80b-a3b-instruct:free",                # Qwen3 80B (Alibaba)
     "nvidia/nemotron-3-super-120b-a12b:free",               # Nemotron 120B (NVIDIA)
     "google/gemma-3-12b-it:free",                           # Gemma 12B — 경량 (Google)
     "mistralai/mistral-small-3.1-24b-instruct:free",        # Mistral 24B — 마지막 폴백
