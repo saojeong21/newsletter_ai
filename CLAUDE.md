@@ -15,7 +15,7 @@ GitHub: `https://github.com/saojeong21/newsletter_ai`
 |---|---|
 | 백엔드 | FastAPI + Jinja2 (SSR) |
 | DB | Supabase PostgreSQL (`ainewsletter_items` 테이블) |
-| AI 요약 | OpenRouter 무료 모델 폴백 (gemma-3-27b → gemma-3-12b → llama-3.3-70b → mistral-small) |
+| AI 요약 | OpenRouter 무료 모델 폴백 (gemma-3-27b → llama-3.3-70b → qwen3-80b → nemotron-120b → gemma-3-12b → mistral-small) |
 | 뉴스 수집 | feedparser RSS (활성 10개 소스, 국내외 AI 기사) |
 | 배포 | Vercel 서버리스 |
 | 자동 수집 | GitHub Actions (주): UTC 22:00 수집→요약 순차 실행 / Vercel Cron (백업) |
@@ -65,30 +65,34 @@ Newsletter/
   - Google AI Blog URL 301 리다이렉트 최종 URL로 교체
   - 요약 cron `limit=10→5` (90초→52초, 60초 제한 내)
   - 요약 모델 4개→6개, 공급사 2→4개 분산 (동시 rate limit 방지)
-- **10차 (03-12)**: GitHub Actions 크론 추가 (Vercel Hobby 크론 불안정 대응)
-  - `.github/workflows/cron.yml` 추가 — UTC 22:00 수집→요약 순차 실행 (`needs: collect`)
-  - Vercel Deployment Protection 우회: `x-vercel-protection-bypass` 헤더 적용
-  - GitHub Secrets: `CRON_SECRET`, `VERCEL_BYPASS_SECRET` 등록
-  - Vercel Cron은 백업으로 유지
 - **9차 (03-11)**: Supabase 보안 강화
   - `ainewsletter_items` 테이블 RLS 활성화
   - SELECT: anon/authenticated 허용, INSERT/UPDATE/DELETE: service_role만 허용
   - `supabase_db.py` 쓰기 함수(`save_article`, `update_summary`)에 `_service_headers()` 적용
   - 환경변수 `SUPABASE_SERVICE_ROLE_KEY` 추가 (Vercel + 로컬 .env)
+- **10차 (03-12)**: GitHub Actions 크론 추가 (Vercel Hobby 크론 불안정 대응)
+  - `.github/workflows/cron.yml` 추가 — UTC 22:00 수집→요약 순차 실행 (`needs: collect`)
+  - Vercel Deployment Protection 우회: `x-vercel-protection-bypass` 헤더 적용
+  - GitHub Secrets: `CRON_SECRET`, `VERCEL_BYPASS_SECRET` 등록
+  - Vercel Cron은 백업으로 유지
+- **11차 (03-14)**: OpenRouter 요약 모델 교체 (rate limit 내성 강화)
+  - `nousresearch/hermes-3-llama-3.1-405b` → `nvidia/nemotron-3-super-120b-a12b` (NVIDIA 공급사 추가)
+  - `openai/gpt-oss-20b` 제거 — OpenRouter 계정 프라이버시 설정 필요한 모델 (404 오류)
+  - 최종 공급사 구성: Google · Meta · Alibaba · NVIDIA · Mistral (5개)
 
 ---
 
-## 현재 상태 (2026-03-12 기준)
+## 현재 상태 (2026-03-14 기준)
 
 | 항목 | 상태 |
 |---|---|
 | Supabase 연결 | 정상 |
-| 전체 기사 수 | ~260건 |
-| 요약 완료 | 전부 완료 (미요약 0건) |
+| 전체 기사 수 | ~490건 |
+| 요약 완료 | 366건 완료 / 미요약 122건 (일별 limit=5씩 점진 처리) |
 | 활성 RSS 소스 | 10개 (비활성 5개) |
 | GitHub Actions 크론 | UTC 22:00 수집→요약 순차 실행 — 정상 작동 확인 |
 | Vercel Cron | 수집 `0 22 * * *` / 요약 `20 22 * * *` — 백업 유지 |
-| 요약 모델 | 6개 / 4개 공급사 분산 (rate limit 내성 강화) |
+| 요약 모델 | 6개 / 5개 공급사 분산 (Google·Meta·Alibaba·NVIDIA·Mistral) |
 
 ---
 
