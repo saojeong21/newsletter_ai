@@ -23,12 +23,12 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 # 무료 모델 우선순위 목록 (OpenRouter 실제 가용 모델 기준, 2026-03 확인)
 # rate limit 또는 에러 발생 시 순서대로 다음 모델로 자동 전환.
 # 한국어 지원 품질 우수 모델을 상위에 배치.
-# 서로 다른 공급사 모델로 분산 → 동시 rate limit 방지
+# 서로 다른 공급사(Google/Meta/OpenAI/NVIDIA/Mistral) 5개로 분산 → 동시 rate limit 방지
 FREE_MODELS = [
     "google/gemma-3-27b-it:free",                           # Gemma 27B — 주력 (Google)
     "meta-llama/llama-3.3-70b-instruct:free",               # Llama 70B — 한국어 우수 (Meta)
-    "qwen/qwen3-next-80b-a3b-instruct:free",                # Qwen3 80B — 한국어 우수 (Alibaba)
-    "nousresearch/hermes-3-llama-3.1-405b:free",            # Hermes 405B (NousResearch/Meta)
+    "openai/gpt-oss-20b:free",                              # GPT OSS 20B — 경량·빠름 (OpenAI)
+    "nvidia/nemotron-3-super-120b-a12b:free",               # Nemotron 120B (NVIDIA)
     "google/gemma-3-12b-it:free",                           # Gemma 12B — 경량 (Google)
     "mistralai/mistral-small-3.1-24b-instruct:free",        # Mistral 24B — 마지막 폴백
 ]
