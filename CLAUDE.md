@@ -18,7 +18,7 @@ GitHub: `https://github.com/saojeong21/newsletter_ai`
 | AI 요약 | OpenRouter 무료 모델 폴백 (gemma-3-27b → llama-3.3-70b → qwen3-80b → nemotron-120b → gemma-3-12b → mistral-small) |
 | 뉴스 수집 | feedparser RSS (활성 10개 소스, 국내외 AI 기사) |
 | 배포 | Vercel 서버리스 |
-| 자동 수집 | GitHub Actions (주): UTC 22:00 수집→요약 순차 실행 / Vercel Cron (백업) |
+| 자동 수집 | GitHub Actions (주): 3시간마다 수집→요약×2 순차 실행 / Vercel Cron (백업) |
 
 ---
 
@@ -41,7 +41,7 @@ Newsletter/
 │   └── static/           ← style.css, favicon.svg
 ├── public/static/        ← Vercel CDN 서빙용 정적 파일 (style.css, favicon.svg)
 ├── .github/workflows/
-│   └── cron.yml          ← GitHub Actions 크론 (UTC 22:00 수집→요약 순차, Vercel 크론 백업)
+│   └── cron.yml          ← GitHub Actions 크론 (3시간마다 수집→요약×2 순차, Vercel 크론 백업)
 ├── Newsletter_AI.html    ← 브라우저 미리보기용 정적 HTML
 └── PRD.md                ← 상품 기획 문서
 ```
@@ -79,18 +79,23 @@ Newsletter/
   - `nousresearch/hermes-3-llama-3.1-405b` → `nvidia/nemotron-3-super-120b-a12b` (NVIDIA 공급사 추가)
   - `openai/gpt-oss-20b` 제거 — OpenRouter 계정 프라이버시 설정 필요한 모델 (404 오류)
   - 최종 공급사 구성: Google · Meta · Alibaba · NVIDIA · Mistral (5개)
+- **12차 (03-16)**: 크론 스케줄 및 요약 처리량 개선
+  - GitHub Actions 스케줄 `0 22 * * *` → `0 */3 * * *` (하루 1회→3시간마다, 8회/일)
+  - 요약 job 2회 순차 실행 추가 (`summarize` → `summarize2`, `needs` 체인)
+  - 처리량: 5건/실행 → 10건/실행, 40건/일 → 80건/일 (백로그 142건 약 2일 내 해소 예상)
+  - Vercel Cron: Hobby 플랜 하루 1회 제한으로 변경 불가 — 일 1회 백업 유지
 
 ---
 
-## 현재 상태 (2026-03-14 기준)
+## 현재 상태 (2026-03-16 기준)
 
 | 항목 | 상태 |
 |---|---|
 | Supabase 연결 | 정상 |
-| 전체 기사 수 | ~490건 |
-| 요약 완료 | 366건 완료 / 미요약 122건 (일별 limit=5씩 점진 처리) |
+| 전체 기사 수 | ~527건 |
+| 요약 완료 | 385건 완료 / 미요약 142건 (80건/일 처리, 약 2일 내 해소 예상) |
 | 활성 RSS 소스 | 10개 (비활성 5개) |
-| GitHub Actions 크론 | UTC 22:00 수집→요약 순차 실행 — 정상 작동 확인 |
+| GitHub Actions 크론 | `0 */3 * * *` 수집→요약×2 순차 — 정상 작동 확인 |
 | Vercel Cron | 수집 `0 22 * * *` / 요약 `20 22 * * *` — 백업 유지 |
 | 요약 모델 | 6개 / 5개 공급사 분산 (Google·Meta·Alibaba·NVIDIA·Mistral) |
 
