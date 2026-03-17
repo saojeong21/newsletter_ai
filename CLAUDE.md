@@ -53,45 +53,24 @@ Newsletter/
 
 ## 개발 이력 (압축)
 
-- **1차 (03-02)**: FastAPI+SQLite+APScheduler+Jinja2 초기 구축, 버그 4개 수정
-- **2차 (03-03)**: Vercel 배포. SQLite→Supabase, supabase-py→httpx 직접 호출
-- **3차 (03-05)**: daemon 스레드→await 교체, 요약 마킹 버그 수정, APScheduler→Vercel Cron, 3줄 요약 형식
-- **4차 (03-07)**: RSS 소스 정비 (활성 6→10개), Cron timeout 수정, 3줄 요약 클램프 버그 수정
-- **5차 (03-07)**: Morning Brew 스타일 UI 리디자인 (다크헤더+포레스트그린, Playfair Display)
-- **6차 (03-08)**: vercel.json `functions`+`builds` 충돌 수정, 수동 배포 복구
-- **7차 (03-08)**: Cron 2개 분리 (수집 22:00 / 요약 22:20), limit=10으로 60초 내 완료
-- **8차 (03-10)**: 4가지 버그 수정
-  - `Ars Technica AI` → `AI_NATIVE_SOURCES` 누락 수정 (3/7 이후 수집 0건 원인)
-  - Google AI Blog URL 301 리다이렉트 최종 URL로 교체
-  - 요약 cron `limit=10→5` (90초→52초, 60초 제한 내)
-  - 요약 모델 4개→6개, 공급사 2→4개 분산 (동시 rate limit 방지)
-- **9차 (03-11)**: Supabase 보안 강화
-  - `ainewsletter_items` 테이블 RLS 활성화
-  - SELECT: anon/authenticated 허용, INSERT/UPDATE/DELETE: service_role만 허용
-  - `supabase_db.py` 쓰기 함수(`save_article`, `update_summary`)에 `_service_headers()` 적용
-  - 환경변수 `SUPABASE_SERVICE_ROLE_KEY` 추가 (Vercel + 로컬 .env)
-- **10차 (03-12)**: GitHub Actions 크론 추가 (Vercel Hobby 크론 불안정 대응)
-  - `.github/workflows/cron.yml` 추가 — UTC 22:00 수집→요약 순차 실행 (`needs: collect`)
-  - Vercel Deployment Protection 우회: `x-vercel-protection-bypass` 헤더 적용
-  - GitHub Secrets: `CRON_SECRET`, `VERCEL_BYPASS_SECRET` 등록
-  - Vercel Cron은 백업으로 유지
-- **11차 (03-14)**: OpenRouter 요약 모델 교체 (rate limit 내성 강화)
-  - `nousresearch/hermes-3-llama-3.1-405b` → `nvidia/nemotron-3-super-120b-a12b` (NVIDIA 공급사 추가)
-  - `openai/gpt-oss-20b` 제거 — OpenRouter 계정 프라이버시 설정 필요한 모델 (404 오류)
-  - 최종 공급사 구성: Google · Meta · Alibaba · NVIDIA · Mistral (5개)
-- **12차 (03-16)**: 크론 스케줄 및 요약 처리량 개선
-  - GitHub Actions 스케줄 `0 22 * * *` → `0 */3 * * *` (하루 1회→3시간마다, 8회/일)
-  - 요약 job 2회 순차 실행 추가 (`summarize` → `summarize2`, `needs` 체인)
-  - 처리량: 5건/실행 → 10건/실행, 40건/일 → 80건/일 (백로그 142건 약 2일 내 해소 예상)
-  - Vercel Cron: Hobby 플랜 하루 1회 제한으로 변경 불가 — 일 1회 백업 유지
-- **13차 (03-17)**: 아키텍처 전면 검토 — 수집·요약 신뢰성 강화
-  - **[summarizer.py]** 잘못된 모델 ID 교체: `qwen3-next-80b-a3b-instruct:free` · `nemotron-3-super-120b-a12b:free` → DeepSeek R1 · DeepSeek V3 (검증된 모델로 교체, 공급사: Google·Meta·DeepSeek·Mistral)
-  - **[summarizer.py]** 요약 프롬프트 강화: 번호·글머리 기호·헤더 일절 금지 명시
-  - **[summarizer.py]** `_clean_summary()` 후처리 함수 추가: 1./•/-/* 등 제거, 최대 3줄 추출
-  - **[index.html / news.html]** 요약 3줄 HTML 표시 버그 수정: `\n` → `<br>` (줄바꿈이 HTML에서 무시되던 문제 해결)
-  - **[supabase_db.py]** `get_unsummarized_articles(limit)` — limit을 DB 쿼리에 직접 전달 (기존: 전체 로드 후 Python 슬라이스)
-  - **[main.py / scheduler.py]** `asyncio.get_event_loop()` → `asyncio.get_running_loop()` (Python 3.10+ 권장 API)
-  - **[sources.py]** AI_KEYWORDS에 누락 기업 추가: DeepSeek, xAI, Grok, Mistral, Cohere, Baidu, Alibaba, Qwen, SKT, 한컴, 마인즈랩, 멀티모달, 자연어처리
+- **1~7차 (03-02~03-08)**: 초기 구축 → Vercel+Supabase 배포 → Cron 분리, 소스 10개, 버그 수정
+- **8차 (03-10)**: Ars Technica 누락 수정, 요약 모델 6개·공급사 4개로 분산
+- **9차 (03-11)**: Supabase RLS 활성화, service_role key로 쓰기 권한 분리
+- **10차 (03-12)**: GitHub Actions 3시간 크론 추가, Vercel Protection 우회
+- **11~12차 (03-14~03-16)**: 모델 교체(NVIDIA→DeepSeek), 크론 8회/일·요약 80건/일로 개선
+- **13차 (03-17)**: 아키텍처 검토 — 모델 ID 수정, 프롬프트 강화, HTML \n→br 버그, limit DB 직달, asyncio 수정, AI_KEYWORDS 보강
+- **14차 (03-17)**: UI 전면 리디자인 — 모던 카드 레이아웃
+  - Morning Brew 다크 테마 → 라벤더-화이트 배경 (`#f5f4ff`) 클린 카드 UI로 교체
+  - 폰트: Playfair Display + Inter → **DM Sans + Noto Sans KR**
+  - 히어로: 그라디언트 타이틀, 통계 뱃지, 날짜 선택기 + 수집 버튼 한 줄 배치
+  - 소스 카드 스트립: 소스별 앱 아이콘 스타일 컬러 뱃지 + 기사 수 표시
+  - 뉴스 카드: 3열 그리드, 소스 컬러 아이콘, 검색+지역 필터 바
+  - `public/static/style.css` 동시 업데이트 (Vercel CDN 반영)
+- **15차 (03-17)**: 요약 언어 소스별 자동 분리
+  - 국내 소스(AI타임스, 한국경제 IT) → 한국어 3줄 요약
+  - 해외 소스(TechCrunch, VentureBeat 등) → 영어 3문장 요약
+  - `_is_korean_source()` 판별 함수 + `SUMMARY_PROMPT_EN` 템플릿 추가
+  - 기존 요약 완료 기사는 재처리 없음 (신규 기사부터 적용)
 
 ---
 
@@ -106,6 +85,7 @@ Newsletter/
 | GitHub Actions 크론 | `0 */3 * * *` 수집→요약×2 순차 — 정상 작동 |
 | Vercel Cron | 수집 `0 22 * * *` / 요약 `20 22 * * *` — 백업 유지 |
 | 요약 모델 | 6개 / 4개 공급사 분산 (Google·Meta·DeepSeek·Mistral) |
+| 요약 언어 | 국내 소스 → 한국어 / 해외 소스 → 영어 (15차~) |
 
 ---
 
