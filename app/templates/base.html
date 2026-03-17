@@ -9,38 +9,31 @@
     <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- 에디션 바 -->
-    <div class="edition-bar" aria-label="에디션 정보">
-        <div class="edition-bar-inner">
-            <span>AI 뉴스레터</span>
-            <span class="edition-sep">•</span>
-            <span id="editionDate">매일 오전 7시 발행</span>
-            <span class="edition-sep">•</span>
-            <span>국내외 AI 최신 뉴스</span>
+    <!-- 상단 정보 바 -->
+    <div class="top-bar" aria-label="에디션 정보">
+        <div class="container">
+            <div class="top-bar-inner">
+                <span>AI 뉴스레터</span>
+                <span class="top-bar-sep">•</span>
+                <span id="topBarDate">매일 오전 7시 발행</span>
+                <span class="top-bar-sep">•</span>
+                <span>국내외 AI 최신 뉴스</span>
+            </div>
         </div>
     </div>
 
     <!-- 헤더 -->
-    <header class="site-header" role="banner">
+    <header class="site-header" id="siteHeader" role="banner">
         <div class="container">
             <div class="header-inner">
                 <!-- 로고 -->
                 <a href="/" class="logo" aria-label="AI 뉴스레터 홈으로 이동">
-                    <span class="logo-icon" aria-hidden="true">☕</span>
-                    <div class="logo-text">
-                        <span class="logo-title">AI 뉴스레터</span>
-                        <span class="logo-subtitle">매일 오전 7시 자동 수집</span>
-                    </div>
+                    <span class="logo-icon" aria-hidden="true">🤖</span>
+                    <span class="logo-title">AI 뉴스레터</span>
                 </a>
-
-                <!-- 날짜/인사 (데스크탑) -->
-                <div class="header-dateline" aria-label="오늘 날짜">
-                    <span class="header-date" id="headerDate">불러오는 중...</span>
-                    <span class="header-greeting" id="headerGreeting">좋은 아침입니다</span>
-                </div>
 
                 <!-- 내비게이션 -->
                 <nav class="header-nav" aria-label="주요 메뉴">
@@ -100,10 +93,10 @@
 
     <script>
         /* ──────────────────────────────────────────
-           에디션 바 날짜 (동적)
+           상단 바 날짜 (동적)
         ────────────────────────────────────────── */
-        (function initEditionDate() {
-            var el = document.getElementById('editionDate');
+        (function initTopBarDate() {
+            var el = document.getElementById('topBarDate');
             if (el) {
                 var now = new Date();
                 var opts = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
@@ -112,27 +105,30 @@
         })();
 
         /* ──────────────────────────────────────────
-           헤더 날짜 & 인사말 (동적)
+           헤더 스크롤 그림자
         ────────────────────────────────────────── */
-        (function initHeaderDate() {
-            var now  = new Date();
-            var hour = now.getHours();
-
-            var dateEl     = document.getElementById('headerDate');
-            var greetEl    = document.getElementById('headerGreeting');
-
-            if (dateEl) {
-                var opts = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-                dateEl.textContent = now.toLocaleDateString('ko-KR', opts);
-            }
-
-            if (greetEl) {
-                var greeting = '좋은 아침입니다';
-                if (hour >= 12 && hour < 18) greeting = '좋은 오후입니다';
-                else if (hour >= 18 || hour < 5) greeting = '좋은 저녁입니다';
-                greetEl.textContent = greeting;
-            }
+        (function initScrollShadow() {
+            var header = document.getElementById('siteHeader');
+            if (!header) return;
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 8) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            }, { passive: true });
         })();
+
+        /* ──────────────────────────────────────────
+           HTML 이스케이프 (전역)
+        ────────────────────────────────────────── */
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
 
         /* ──────────────────────────────────────────
            토스트 알림 시스템
@@ -169,7 +165,6 @@
 
             document.getElementById('toastContainer').appendChild(toast);
 
-            // 표시 애니메이션 (다음 프레임에서 클래스 추가)
             requestAnimationFrame(function() {
                 requestAnimationFrame(function() {
                     toast.classList.add('show');
@@ -194,14 +189,6 @@
             setTimeout(function() { el.remove(); }, 350);
         }
 
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-
         /* ──────────────────────────────────────────
            로딩 오버레이 + 메시지 순환
         ────────────────────────────────────────── */
@@ -224,7 +211,6 @@
             document.body.style.overflow = 'hidden';
 
             var step = 0;
-            // 즉시 첫 번째 메시지 표시
             if (iconEl) iconEl.textContent = LOADING_STEPS[0].icon;
             if (msgEl)  msgEl.textContent  = LOADING_STEPS[0].msg;
 
@@ -252,8 +238,7 @@
         /* ──────────────────────────────────────────
            수집 버튼 공통 핸들러
         ────────────────────────────────────────── */
-        function handleCollect(btn, formId) {
-            // 버튼 로딩 상태
+        function handleCollect(btn) {
             btn.disabled = true;
             btn.classList.add('loading');
             var labelEl = btn.querySelector('.btn-label');
@@ -299,7 +284,7 @@
             });
         }
 
-        // 빈 상태 수집 버튼 (index.html 내부에서도 동일 함수 호출)
+        // 빈 상태 / 기타 수집 버튼에서도 동일 함수 호출
         window.__handleCollect = handleCollect;
     </script>
 

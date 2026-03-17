@@ -3,62 +3,70 @@
 {% block title %}{% if selected_date == today %}오늘{% else %}{{ selected_date }}{% endif %}의 AI 뉴스 — AI 뉴스레터{% endblock %}
 
 {% block content %}
+
+{# ── 소스 아이콘 컬러 매핑 ── #}
+{% set src_colors = {
+    'TechCrunch AI':             'linear-gradient(135deg,#f97316,#fb923c)',
+    'VentureBeat AI':            'linear-gradient(135deg,#8b5cf6,#a78bfa)',
+    'The Verge AI':              'linear-gradient(135deg,#3b82f6,#60a5fa)',
+    'Google AI Blog':            'linear-gradient(135deg,#10b981,#34d399)',
+    'MIT Technology Review AI':  'linear-gradient(135deg,#ef4444,#f87171)',
+    'Hugging Face Blog':         'linear-gradient(135deg,#f59e0b,#fbbf24)',
+    'AI News':                   'linear-gradient(135deg,#14b8a6,#2dd4bf)',
+    'Ars Technica AI':           'linear-gradient(135deg,#f43f5e,#fb7185)',
+    'AI타임스':                   'linear-gradient(135deg,#6366f1,#818cf8)',
+    '한국경제 IT':                 'linear-gradient(135deg,#0ea5e9,#38bdf8)'
+} %}
+
 <!-- ── 히어로 섹션 ── -->
 <section class="page-hero" aria-labelledby="heroTitle">
-    <div class="hero-content">
-        <!-- 아침 인사 -->
-        <div class="hero-greeting">
-            <span class="hero-weather-emoji" aria-hidden="true" id="heroEmoji">🌅</span>
-            <span class="hero-greeting-text" id="heroGreetingText">좋은 아침입니다</span>
-        </div>
-
-        <h1 class="hero-title" id="heroTitle">
-            {% if selected_date == today %}
-                오늘의 AI 뉴스
-            {% else %}
-                {{ selected_date }} AI 뉴스
-            {% endif %}
-        </h1>
-
-        <!-- 통계 배지 -->
-        <div class="hero-stats" aria-label="수집 통계">
-            {% if article_count > 0 %}
-            <div class="stat-item">
-                <span class="stat-icon" aria-hidden="true">📰</span>
-                <div>
-                    <div class="stat-value">{{ article_count }}</div>
-                    <div class="stat-label">수집 기사</div>
-                </div>
-            </div>
-            {% set summarized_count = articles | selectattr('is_summarized') | list | length %}
-            {% if summarized_count > 0 %}
-            <div class="stat-item">
-                <span class="stat-icon" aria-hidden="true">✦</span>
-                <div>
-                    <div class="stat-value">{{ summarized_count }}</div>
-                    <div class="stat-label">AI 요약</div>
-                </div>
-            </div>
-            {% endif %}
-            {% set source_count = articles | map(attribute='source_name') | unique | list | length %}
-            {% if source_count > 0 %}
-            <div class="stat-item">
-                <span class="stat-icon" aria-hidden="true">🌐</span>
-                <div>
-                    <div class="stat-value">{{ source_count }}</div>
-                    <div class="stat-label">소스</div>
-                </div>
-            </div>
-            {% endif %}
-            {% else %}
-            <p class="hero-subtitle">아직 수집된 기사가 없습니다.</p>
-            {% endif %}
-        </div>
+    <!-- 라벨 필 -->
+    <div class="hero-pill" aria-hidden="true">
+        <span class="hero-pill-dot"></span>
+        AI 뉴스레터 데일리
     </div>
 
-    <!-- 날짜 선택기 -->
-    <div class="date-picker-wrapper">
-        <label for="datePicker" class="date-label">날짜 선택</label>
+    <!-- 타이틀 -->
+    <h1 class="hero-title" id="heroTitle">
+        {% if selected_date == today %}
+            오늘의 AI 뉴스
+        {% else %}
+            {{ selected_date }} AI 뉴스
+        {% endif %}
+    </h1>
+
+    <!-- 통계 배지 -->
+    {% if article_count > 0 %}
+    <div class="hero-stats" aria-label="수집 통계">
+        <span class="stat-badge">
+            <span class="stat-badge-icon" aria-hidden="true">📰</span>
+            <span class="stat-badge-value">{{ article_count }}</span>
+            <span class="stat-badge-label">기사</span>
+        </span>
+
+        {% set summarized_count = articles | selectattr('is_summarized') | list | length %}
+        {% if summarized_count > 0 %}
+        <span class="stat-badge">
+            <span class="stat-badge-icon" aria-hidden="true">✦</span>
+            <span class="stat-badge-value">{{ summarized_count }}</span>
+            <span class="stat-badge-label">AI 요약 완료</span>
+        </span>
+        {% endif %}
+
+        {% set source_count = articles | map(attribute='source_name') | unique | list | length %}
+        {% if source_count > 0 %}
+        <span class="stat-badge">
+            <span class="stat-badge-icon" aria-hidden="true">🌐</span>
+            <span class="stat-badge-value">{{ source_count }}</span>
+            <span class="stat-badge-label">소스</span>
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- 날짜 선택 + 수집 버튼 -->
+    <div class="hero-controls">
+        <label for="datePicker" class="sr-only">날짜 선택</label>
         <input
             type="date"
             id="datePicker"
@@ -68,10 +76,16 @@
             onchange="location.href='/?date=' + this.value"
             aria-label="날짜를 선택하면 해당 날짜 뉴스로 이동합니다"
         >
+        <form action="/api/collect" method="post" id="heroCollectForm">
+            <button type="submit" class="btn btn-primary btn-sm" id="heroCollectBtn" aria-label="뉴스 수집 시작">
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span class="btn-label">지금 수집하기</span>
+            </button>
+        </form>
     </div>
 </section>
 
-<!-- ── 빠른 날짜 탐색 ── -->
+<!-- ── 빠른 날짜 탐색 칩 ── -->
 {% if available_dates %}
 <nav class="date-nav" aria-label="최근 수집 날짜">
     <span class="date-nav-label">최근 수집일:</span>
@@ -81,30 +95,64 @@
             href="/?date={{ d }}"
             class="date-chip {% if d == selected_date %}active{% endif %}"
             {% if d == selected_date %}aria-current="page"{% endif %}
-        >
-            {{ d }}
-        </a>
+        >{{ d }}</a>
         {% endfor %}
     </div>
 </nav>
 {% endif %}
 
-<!-- ── 기사 목록 ── -->
 {% if articles %}
 
-<!-- 소스 필터 바 -->
-<div class="filter-bar" role="group" aria-label="소스 필터">
-    <span class="filter-label" aria-hidden="true">필터</span>
-    <button class="filter-btn active" data-filter="all" aria-pressed="true">전체 <span id="filterCountAll">{{ article_count }}</span></button>
-    <button class="filter-btn" data-filter="domestic" aria-pressed="false">국내</button>
-    <button class="filter-btn" data-filter="international" aria-pressed="false">해외</button>
+<!-- ── 소스 오버뷰 스트립 ── -->
+<div class="source-strip" aria-label="소스별 기사 수">
+    <div class="source-strip-scroll">
+        {# 소스별 기사 수 집계 (Jinja2) #}
+        {% set source_counts = namespace(data={}) %}
+        {% for article in articles %}
+            {% if article.source_name in source_counts.data %}
+                {% set _ = source_counts.data.update({article.source_name: source_counts.data[article.source_name] + 1}) %}
+            {% else %}
+                {% set _ = source_counts.data.update({article.source_name: 1}) %}
+            {% endif %}
+        {% endfor %}
+
+        {% for src_name, cnt in source_counts.data.items() %}
+        {% set src_color = src_colors.get(src_name, 'linear-gradient(135deg,#6b7280,#9ca3af)') %}
+        {% set src_initials = src_name[:2] %}
+        <div class="source-overview-card">
+            <div class="source-icon" style="background: {{ src_color }}" aria-hidden="true">{{ src_initials }}</div>
+            <div>
+                <div class="source-overview-name">{{ src_name }}</div>
+                <div class="source-overview-count">{{ cnt }}건</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 
+<!-- ── 검색 + 필터 바 ── -->
+<div class="search-filter-bar" role="group" aria-label="검색 및 지역 필터">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input
+        type="search"
+        class="search-input"
+        id="searchInput"
+        placeholder="기사 검색..."
+        aria-label="기사 제목 검색"
+        autocomplete="off"
+    >
+    <div class="filter-sep" aria-hidden="true"></div>
+    <div class="filter-pills" role="group" aria-label="지역 필터">
+        <button class="filter-pill active" data-filter="all" aria-pressed="true">전체</button>
+        <button class="filter-pill" data-filter="domestic" aria-pressed="false">국내</button>
+        <button class="filter-pill" data-filter="international" aria-pressed="false">해외</button>
+    </div>
+</div>
+
+<!-- ── 뉴스 카드 그리드 ── -->
 <section class="news-grid" id="newsGrid" aria-label="오늘의 AI 뉴스 카드">
     {% for article in articles %}
-    {# 소스명 기반으로 국내/해외 분류 #}
     {% set src_key = article.source_name | replace(' ', '-') | lower | truncate(20, False, '') %}
-    {# 국내 소스 판별: 소스명(영문/한글 공통) 기반으로 국내 여부 결정 #}
     {% set is_domestic = 'korea' in article.source_name | lower
         or '코리아' in article.source_name
         or 'zdnet' in src_key
@@ -119,22 +167,23 @@
         or '한겨레' in article.source_name
         or 'naver' in src_key
         or 'kakao' in src_key %}
+    {% set src_color = src_colors.get(article.source_name, 'linear-gradient(135deg,#6b7280,#9ca3af)') %}
+    {% set src_initials = article.source_name[:2] %}
 
     <article
         class="news-card"
         data-source="{{ src_key }}"
         data-region="{% if is_domestic %}domestic{% else %}international{% endif %}"
-        aria-label="{{ article.source_name }} - {{ article.title }}"
+        data-title="{{ article.title | lower }}"
+        aria-label="{{ article.source_name }} — {{ article.title }}"
     >
-        <!-- 소스별 컬러바 -->
-        <div class="card-colorbar src-{{ src_key }}" aria-hidden="true"></div>
-
         <div class="card-body">
-            <!-- 카드 헤더: 소스 뱃지 + 시간 -->
+            <!-- 헤더: 소스 아이콘 + 소스명 + 시간 -->
             <div class="card-header">
-                <span class="source-badge src-{{ src_key }}" title="{{ article.source_name }}">
-                    {{ article.source_name }}
-                </span>
+                <div class="source-icon" style="background: {{ src_color }}" aria-hidden="true">{{ src_initials }}</div>
+                <div class="card-source-info">
+                    <span class="card-source-name">{{ article.source_name }}</span>
+                </div>
                 <time class="card-time" datetime="{{ (article.published_at or article.collected_at).strftime('%Y-%m-%dT%H:%M:%S') }}">
                     {% if article.published_at %}
                         {{ article.published_at.strftime('%m/%d %H:%M') }}
@@ -156,27 +205,40 @@
                 {% if article.summary_ko %}
                     <p class="summary-text">{{ article.summary_ko | replace('\n', '<br>') | safe }}</p>
                 {% elif article.description %}
-                    <p class="summary-text description-fallback">{{ article.description[:200] }}{% if article.description|length > 200 %}...{% endif %}</p>
+                    <p class="summary-text description-fallback">{{ article.description[:120] }}{% if article.description|length > 120 %}...{% endif %}</p>
                 {% else %}
                     <p class="summary-empty">요약을 불러오는 중입니다...</p>
                 {% endif %}
             </div>
 
-            <!-- 카드 푸터 -->
+            <!-- 카드 푸터: 태그 + 원문 링크 -->
             <div class="card-footer">
-                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+                <div class="card-tags">
+                    <span class="tag-region {% if is_domestic %}domestic{% else %}international{% endif %}">
+                        {% if is_domestic %}국내{% else %}해외{% endif %}
+                    </span>
+                    {% if article.is_summarized and article.summary_ko %}
+                        <span class="ai-badge">AI 요약</span>
+                    {% endif %}
+                </div>
+                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
                     원문 보기 →
                 </a>
-                {% if article.is_summarized and article.summary_ko %}
-                    <span class="ai-badge">AI 요약</span>
-                {% endif %}
             </div>
         </div>
     </article>
     {% endfor %}
 </section>
 
+<!-- 검색 결과 없음 메시지 -->
+<div id="noSearchResults" style="display:none;" class="empty-state" aria-live="polite">
+    <div class="empty-icon" aria-hidden="true">🔍</div>
+    <h2 class="empty-title">검색 결과가 없습니다</h2>
+    <p class="empty-desc">다른 검색어나 필터를 사용해보세요.</p>
+</div>
+
 {% else %}
+
 <!-- ── 기사 없음 안내 ── -->
 <div class="empty-state" role="main">
     <div class="empty-icon" aria-hidden="true">📰</div>
@@ -199,7 +261,7 @@
             </button>
         </form>
         {% if available_dates %}
-        <a href="/?date={{ available_dates[0] }}" class="btn btn-outline">
+        <a href="/?date={{ available_dates[0] }}" class="btn btn-ghost">
             최근 뉴스 보기 ({{ available_dates[0] }})
         </a>
         {% endif %}
@@ -207,7 +269,7 @@
 </div>
 {% endif %}
 
-<!-- ── 키워드 트렌드 섹션 ── -->
+<!-- ── 트렌드 키워드 섹션 ── -->
 {% if articles %}
 <section class="keywords-section" aria-labelledby="keywordsTitle">
     <div class="keywords-header">
@@ -216,66 +278,27 @@
         <span class="keywords-subtitle">수집 기사 제목 기반</span>
     </div>
     <div class="keyword-tags" id="keywordTags" aria-label="트렌드 키워드 목록">
-        <!-- JavaScript로 동적 생성 -->
         <span class="keyword-tag">키워드 분석 중...</span>
     </div>
 </section>
 {% endif %}
+
 {% endblock %}
 
 {% block scripts %}
 <script>
     /* ──────────────────────────────────────────
-       히어로 이모지/인사말 시간대 반영
+       히어로 수집 버튼
     ────────────────────────────────────────── */
     (function() {
-        var hour = new Date().getHours();
-        var emojiEl   = document.getElementById('heroEmoji');
-        var greetEl   = document.getElementById('heroGreetingText');
-
-        var emojis   = ['🌙','🌙','🌙','🌙','🌙','🌅','🌅','☀️','☀️','☀️','☀️','☀️','🌤️','🌤️','🌤️','🌤️','🌤️','🌤️','🌆','🌆','🌇','🌃','🌙','🌙'];
-        var greetings = ['좋은 새벽입니다','좋은 새벽입니다','좋은 새벽입니다','좋은 새벽입니다','좋은 새벽입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 아침입니다','좋은 점심입니다','좋은 오후입니다','좋은 오후입니다','좋은 오후입니다','좋은 오후입니다','좋은 오후입니다','좋은 저녁입니다','좋은 저녁입니다','좋은 저녁입니다','좋은 밤입니다','좋은 밤입니다','좋은 밤입니다'];
-
-        if (emojiEl)  emojiEl.textContent  = emojis[hour]   || '☀️';
-        if (greetEl)  greetEl.textContent  = greetings[hour] || '안녕하세요';
-    })();
-
-    /* ──────────────────────────────────────────
-       소스 필터 기능
-    ────────────────────────────────────────── */
-    (function() {
-        var filterBtns = document.querySelectorAll('.filter-btn');
-        var cards      = document.querySelectorAll('.news-card');
-        var countAllEl = document.getElementById('filterCountAll');
-
-        if (!filterBtns.length) return;
-
-        filterBtns.forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var filter = this.dataset.filter;
-
-                // 버튼 상태 업데이트
-                filterBtns.forEach(function(b) {
-                    b.classList.remove('active');
-                    b.setAttribute('aria-pressed', 'false');
-                });
-                this.classList.add('active');
-                this.setAttribute('aria-pressed', 'true');
-
-                // 카드 필터
-                var visibleCount = 0;
-                cards.forEach(function(card) {
-                    var region = card.dataset.region;
-                    var show   = filter === 'all' || region === filter;
-                    card.setAttribute('data-hidden', show ? 'false' : 'true');
-                    if (show) visibleCount++;
-                });
-
-                // 전체 카운트 업데이트
-                if (countAllEl && filter !== 'all') {
-                    // 현재 필터된 카드 수 표시는 버튼 텍스트로 처리
-                }
-            });
+        var heroForm = document.getElementById('heroCollectForm');
+        if (!heroForm) return;
+        heroForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var btn = document.getElementById('heroCollectBtn');
+            if (typeof window.__handleCollect === 'function') {
+                window.__handleCollect(btn);
+            }
         });
     })();
 
@@ -285,7 +308,6 @@
     (function() {
         var emptyForm = document.getElementById('emptyCollectForm');
         if (!emptyForm) return;
-
         emptyForm.addEventListener('submit', function(e) {
             e.preventDefault();
             var btn = document.getElementById('emptyCollectBtn');
@@ -296,13 +318,73 @@
     })();
 
     /* ──────────────────────────────────────────
+       검색 + 지역 필터 (함께 동작)
+    ────────────────────────────────────────── */
+    (function() {
+        var filterBtns   = document.querySelectorAll('.filter-pill');
+        var searchInput  = document.getElementById('searchInput');
+        var cards        = document.querySelectorAll('.news-card');
+        var noResults    = document.getElementById('noSearchResults');
+
+        if (!filterBtns.length && !searchInput) return;
+
+        var DOMESTIC_SOURCES = new Set(['AI타임스', '한국경제 IT', 'ZDNet Korea', '전자신문']);
+
+        var currentFilter = 'all';
+        var currentSearch = '';
+
+        function applyFilters() {
+            var visibleCount = 0;
+
+            cards.forEach(function(card) {
+                var region  = card.getAttribute('data-region') || '';
+                var titleAttr = card.getAttribute('data-title') || '';
+
+                var regionOk = currentFilter === 'all' || region === currentFilter;
+                var searchOk = currentSearch === '' || titleAttr.indexOf(currentSearch) !== -1;
+                var show = regionOk && searchOk;
+
+                card.setAttribute('data-hidden', show ? 'false' : 'true');
+                if (show) visibleCount++;
+            });
+
+            if (noResults) {
+                noResults.style.display = (visibleCount === 0 && cards.length > 0) ? 'block' : 'none';
+            }
+        }
+
+        // 필터 필 클릭
+        filterBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                currentFilter = this.getAttribute('data-filter');
+
+                filterBtns.forEach(function(b) {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-pressed', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-pressed', 'true');
+
+                applyFilters();
+            });
+        });
+
+        // 검색 인풋
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                currentSearch = this.value.trim().toLowerCase();
+                applyFilters();
+            });
+        }
+    })();
+
+    /* ──────────────────────────────────────────
        트렌드 키워드 추출 (클라이언트 사이드)
     ────────────────────────────────────────── */
     (function() {
         var container = document.getElementById('keywordTags');
         if (!container) return;
 
-        // 기사 카드에서 제목 텍스트 수집
         var titles = Array.from(document.querySelectorAll('.card-title-link'))
             .map(function(el) { return el.textContent.trim(); });
 
@@ -311,7 +393,6 @@
             return;
         }
 
-        // 불용어 목록
         var stopWords = new Set([
             '그','이','저','것','수','를','이','가','은','는','에','의','로','으로','와','과',
             '도','들','에서','까지','부터','하여','으며','이며','했다','한다','하는','있다',
@@ -320,13 +401,11 @@
             'was','were','be','been','has','have','had','will','would','and','or','but','not',
             'this','that','it','its','he','she','they','we','you','new','says','report',
             '공개','발표','출시','론칭','업데이트','서비스','기술','플랫폼','기업',
-            '통해','위해','오픈','미국','한국','글로벌','공식','신규','최신','올해',
+            '통해','위해','오픈','미국','한국','글로벌','공식','신규','최신','올해'
         ]);
 
-        // 단어 빈도 계산
         var freq = {};
         titles.forEach(function(title) {
-            // 한국어 단어 (2글자 이상) + 영어 단어 (3글자 이상) 추출
             var words = title.match(/[가-힣]{2,}|[A-Za-z]{3,}/g) || [];
             words.forEach(function(w) {
                 var lw = w.toLowerCase();
@@ -335,7 +414,6 @@
             });
         });
 
-        // 빈도 기준 정렬, 상위 20개 추출
         var sorted = Object.entries(freq)
             .filter(function(e) { return e[1] >= 1; })
             .sort(function(a, b) { return b[1] - a[1]; })
@@ -348,23 +426,19 @@
 
         var maxFreq = sorted[0][1];
 
+        function escHtml(str) {
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
         var html = sorted.map(function(entry) {
-            var word = entry[0];
-            var cnt  = entry[1];
+            var word  = entry[0];
+            var cnt   = entry[1];
             var ratio = cnt / maxFreq;
             var sizeClass = ratio >= 0.8 ? 'kw-xl' : ratio >= 0.5 ? 'kw-lg' : '';
-            return '<span class="keyword-tag ' + sizeClass + '" title="' + cnt + '회 언급">' + escapeHtml(word) + '</span>';
+            return '<span class="keyword-tag ' + sizeClass + '" title="' + cnt + '회 언급">' + escHtml(word) + '</span>';
         }).join('');
 
         container.innerHTML = html;
-
-        // escapeHtml은 base.html에서 전역으로 정의됨
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        }
     })();
 </script>
 {% endblock %}

@@ -3,20 +3,28 @@
 {% block title %}뉴스 아카이브 — {{ selected_date }} — AI 뉴스레터{% endblock %}
 
 {% block content %}
-<!-- ── 아카이브 히어로 ── -->
-<section class="page-hero" aria-labelledby="archiveHeroTitle">
-    <div class="hero-content">
-        <div class="hero-greeting">
-            <span class="hero-weather-emoji" aria-hidden="true">🗂️</span>
-            <span class="hero-greeting-text">과거 기사 탐색</span>
-        </div>
-        <h1 class="hero-title" id="archiveHeroTitle">뉴스 아카이브</h1>
-        <p class="hero-subtitle">날짜별로 과거 AI 뉴스를 탐색하세요.</p>
-    </div>
 
-    <!-- 날짜 선택기 -->
-    <div class="date-picker-wrapper">
-        <label for="archiveDatePicker" class="date-label">날짜 선택</label>
+{# ── 소스 아이콘 컬러 매핑 ── #}
+{% set src_colors = {
+    'TechCrunch AI':             'linear-gradient(135deg,#f97316,#fb923c)',
+    'VentureBeat AI':            'linear-gradient(135deg,#8b5cf6,#a78bfa)',
+    'The Verge AI':              'linear-gradient(135deg,#3b82f6,#60a5fa)',
+    'Google AI Blog':            'linear-gradient(135deg,#10b981,#34d399)',
+    'MIT Technology Review AI':  'linear-gradient(135deg,#ef4444,#f87171)',
+    'Hugging Face Blog':         'linear-gradient(135deg,#f59e0b,#fbbf24)',
+    'AI News':                   'linear-gradient(135deg,#14b8a6,#2dd4bf)',
+    'Ars Technica AI':           'linear-gradient(135deg,#f43f5e,#fb7185)',
+    'AI타임스':                   'linear-gradient(135deg,#6366f1,#818cf8)',
+    '한국경제 IT':                 'linear-gradient(135deg,#0ea5e9,#38bdf8)'
+} %}
+
+<!-- ── 아카이브 히어로 ── -->
+<div class="archive-page-hero" aria-labelledby="archiveTitle">
+    <div class="archive-hero-pill" aria-hidden="true">🗂️ 뉴스 아카이브</div>
+    <h1 class="archive-hero-title" id="archiveTitle">뉴스 아카이브</h1>
+    <p class="archive-hero-subtitle">날짜별로 과거 AI 뉴스를 탐색하세요.</p>
+    <div class="archive-hero-controls">
+        <label for="archiveDatePicker" class="sr-only">날짜 선택</label>
         <input
             type="date"
             id="archiveDatePicker"
@@ -25,8 +33,9 @@
             onchange="location.href='/news?date=' + this.value"
             aria-label="날짜를 선택하면 해당 날짜 아카이브로 이동합니다"
         >
+        <a href="/" class="btn btn-ghost btn-sm">← 홈으로</a>
     </div>
-</section>
+</div>
 
 <!-- ── 사이드바 + 기사 목록 ── -->
 <div class="archive-sidebar-layout">
@@ -41,9 +50,7 @@
                     href="/news?date={{ d }}"
                     class="archive-date-link {% if d == selected_date %}active{% endif %}"
                     {% if d == selected_date %}aria-current="page"{% endif %}
-                >
-                    {{ d }}
-                </a>
+                >{{ d }}</a>
             </li>
             {% endfor %}
         </ul>
@@ -63,16 +70,29 @@
         <div class="news-list" role="list" aria-label="{{ selected_date }} 기사 목록">
             {% for article in articles %}
             {% set src_key = article.source_name | replace(' ', '-') | lower | truncate(20, False, '') %}
-            <article class="news-list-item" role="listitem" aria-label="{{ article.source_name }} - {{ article.title }}">
-                <!-- 소스별 컬러바 -->
-                <div class="list-item-colorbar src-{{ src_key }}" aria-hidden="true"></div>
+            {% set is_domestic = 'korea' in article.source_name | lower
+                or '코리아' in article.source_name
+                or 'zdnet' in src_key
+                or 'etnews' in src_key
+                or '전자신문' in article.source_name
+                or 'aitimes' in src_key
+                or 'ai타임스' in article.source_name
+                or '한국경제' in article.source_name
+                or '조선' in article.source_name
+                or '중앙' in article.source_name
+                or '연합' in article.source_name
+                or '한겨레' in article.source_name
+                or 'naver' in src_key
+                or 'kakao' in src_key %}
+            {% set src_color = src_colors.get(article.source_name, 'linear-gradient(135deg,#6b7280,#9ca3af)') %}
+            {% set src_initials = article.source_name[:2] %}
 
+            <article class="news-list-item" role="listitem" aria-label="{{ article.source_name }} — {{ article.title }}">
                 <div class="list-item-inner">
-                    <!-- 메타: 소스 뱃지 + 시간 -->
+                    <!-- 메타: 소스 아이콘 + 소스명 + 시간 -->
                     <div class="list-item-meta">
-                        <span class="source-badge src-{{ src_key }}" title="{{ article.source_name }}">
-                            {{ article.source_name }}
-                        </span>
+                        <div class="source-icon" style="background: {{ src_color }}; width:28px; height:28px; border-radius:6px; font-size:0.6rem;" aria-hidden="true">{{ src_initials }}</div>
+                        <span class="card-source-name">{{ article.source_name }}</span>
                         <time class="card-time" datetime="{{ (article.published_at or article.collected_at).strftime('%Y-%m-%dT%H:%M:%S') }}">
                             {% if article.published_at %}
                                 {{ article.published_at.strftime('%H:%M') }}
@@ -100,9 +120,12 @@
 
                     <!-- 푸터 -->
                     <div class="list-item-footer">
-                        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
                             원문 보기 →
                         </a>
+                        <span class="tag-region {% if is_domestic %}domestic{% else %}international{% endif %}">
+                            {% if is_domestic %}국내{% else %}해외{% endif %}
+                        </span>
                         {% if article.is_summarized and article.summary_ko %}
                         <span class="ai-badge">AI 요약</span>
                         {% endif %}
@@ -122,4 +145,5 @@
         {% endif %}
     </div>
 </div>
+
 {% endblock %}
