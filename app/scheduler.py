@@ -68,7 +68,7 @@ async def _async_collection_pipeline() -> dict:
     try:
         # 1단계: RSS 피드 수집 (동기 함수를 스레드풀에서 실행)
         logger.info("1단계: RSS 피드 수집 시작")
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         crawl_result = await loop.run_in_executor(None, fetch_all_feeds)
         logger.info(f"RSS 수집 결과: {crawl_result}")
 

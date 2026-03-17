@@ -109,16 +109,20 @@ AI_KEYWORDS = [
     "AI", "LLM", "GPT", "Gemini", "Claude", "ChatGPT",
     "artificial intelligence", "machine learning", "deep learning",
     "neural network", "large language model", "generative AI",
+    "multimodal", "foundation model", "diffusion model",
+    # 글로벌 AI 기업
     "Nvidia", "OpenAI", "Anthropic", "DeepMind", "Perplexity",
     "Microsoft", "Google", "Meta", "Apple", "Amazon",
-    "Tesla", "Palantir",
+    "Tesla", "Palantir", "DeepSeek", "xAI", "Grok",
+    "Mistral", "Cohere", "Stability AI", "Hugging Face",
+    "Baidu", "Alibaba", "Qwen",
     # 한국어 AI 관련
     "인공지능", "딥러닝", "머신러닝", "생성형", "거대언어모델",
-    "초거대", "파운데이션모델",
+    "초거대", "파운데이션모델", "멀티모달", "자연어처리",
     # 한국 AI/IT 기업
     "네이버", "카카오", "삼성", "SK하이닉스", "LG전자",
     "업스테이지", "퓨리오사", "리벨리온", "포티투닷", "뤼튼",
-    "KT", "현대자동차",
+    "KT", "현대자동차", "SKT", "한컴", "마인즈랩",
 ]
 
 # AI 관련 소스는 전체 기사 수집 (키워드 필터링 불필요)

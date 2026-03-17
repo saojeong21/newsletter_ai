@@ -133,7 +133,8 @@ def get_articles_by_date(target_date: date) -> List[ArticleRow]:
         return [ArticleRow.from_dict(row) for row in resp.json()]
 
 
-def get_unsummarized_articles() -> List[ArticleRow]:
+def get_unsummarized_articles(limit: int = 100) -> List[ArticleRow]:
+    """미요약 기사를 최신순으로 반환한다. limit으로 DB 쿼리 자체를 제한한다."""
     with _client() as c:
         resp = c.get(
             f"{_base_url()}/{TABLE}",
@@ -142,6 +143,7 @@ def get_unsummarized_articles() -> List[ArticleRow]:
                 "is_summarized": "eq.false",
                 "order": "collected_at.desc",
                 "select": "*",
+                "limit": str(limit),
             },
         )
         resp.raise_for_status()

@@ -154,7 +154,7 @@
             <!-- AI 한국어 요약 -->
             <div class="card-summary">
                 {% if article.summary_ko %}
-                    <p class="summary-text">{{ article.summary_ko }}</p>
+                    <p class="summary-text">{{ article.summary_ko | replace('\n', '<br>') | safe }}</p>
                 {% elif article.description %}
                     <p class="summary-text description-fallback">{{ article.description[:200] }}{% if article.description|length > 200 %}...{% endif %}</p>
                 {% else %}

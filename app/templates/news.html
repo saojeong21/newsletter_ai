@@ -91,7 +91,7 @@
 
                     <!-- 요약 -->
                     {% if article.summary_ko %}
-                    <p class="list-item-summary">{{ article.summary_ko }}</p>
+                    <p class="list-item-summary">{{ article.summary_ko | replace('\n', '<br>') | safe }}</p>
                     {% elif article.description %}
                     <p class="list-item-summary description-fallback">
                         {{ article.description[:150] }}{% if article.description|length > 150 %}...{% endif %}

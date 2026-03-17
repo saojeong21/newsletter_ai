@@ -251,7 +251,7 @@ async def cron_collect(request: Request):
     from app.crawler import fetch_all_feeds
 
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(None, fetch_all_feeds)
         logger.info(f"크론 수집 완료: {result}")
         return {"status": "completed", "result": result}

@@ -84,20 +84,28 @@ Newsletter/
   - 요약 job 2회 순차 실행 추가 (`summarize` → `summarize2`, `needs` 체인)
   - 처리량: 5건/실행 → 10건/실행, 40건/일 → 80건/일 (백로그 142건 약 2일 내 해소 예상)
   - Vercel Cron: Hobby 플랜 하루 1회 제한으로 변경 불가 — 일 1회 백업 유지
+- **13차 (03-17)**: 아키텍처 전면 검토 — 수집·요약 신뢰성 강화
+  - **[summarizer.py]** 잘못된 모델 ID 교체: `qwen3-next-80b-a3b-instruct:free` · `nemotron-3-super-120b-a12b:free` → DeepSeek R1 · DeepSeek V3 (검증된 모델로 교체, 공급사: Google·Meta·DeepSeek·Mistral)
+  - **[summarizer.py]** 요약 프롬프트 강화: 번호·글머리 기호·헤더 일절 금지 명시
+  - **[summarizer.py]** `_clean_summary()` 후처리 함수 추가: 1./•/-/* 등 제거, 최대 3줄 추출
+  - **[index.html / news.html]** 요약 3줄 HTML 표시 버그 수정: `\n` → `<br>` (줄바꿈이 HTML에서 무시되던 문제 해결)
+  - **[supabase_db.py]** `get_unsummarized_articles(limit)` — limit을 DB 쿼리에 직접 전달 (기존: 전체 로드 후 Python 슬라이스)
+  - **[main.py / scheduler.py]** `asyncio.get_event_loop()` → `asyncio.get_running_loop()` (Python 3.10+ 권장 API)
+  - **[sources.py]** AI_KEYWORDS에 누락 기업 추가: DeepSeek, xAI, Grok, Mistral, Cohere, Baidu, Alibaba, Qwen, SKT, 한컴, 마인즈랩, 멀티모달, 자연어처리
 
 ---
 
-## 현재 상태 (2026-03-16 기준)
+## 현재 상태 (2026-03-17 기준)
 
 | 항목 | 상태 |
 |---|---|
 | Supabase 연결 | 정상 |
 | 전체 기사 수 | ~527건 |
-| 요약 완료 | 385건 완료 / 미요약 142건 (80건/일 처리, 약 2일 내 해소 예상) |
+| 요약 완료 | 385건 완료 / 미요약 142건 (80건/일 처리 중) |
 | 활성 RSS 소스 | 10개 (비활성 5개) |
-| GitHub Actions 크론 | `0 */3 * * *` 수집→요약×2 순차 — 정상 작동 확인 |
+| GitHub Actions 크론 | `0 */3 * * *` 수집→요약×2 순차 — 정상 작동 |
 | Vercel Cron | 수집 `0 22 * * *` / 요약 `20 22 * * *` — 백업 유지 |
-| 요약 모델 | 6개 / 5개 공급사 분산 (Google·Meta·Alibaba·NVIDIA·Mistral) |
+| 요약 모델 | 6개 / 4개 공급사 분산 (Google·Meta·DeepSeek·Mistral) |
 
 ---
 

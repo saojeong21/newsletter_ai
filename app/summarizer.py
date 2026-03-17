@@ -23,12 +23,12 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 # 무료 모델 우선순위 목록 (OpenRouter 실제 가용 모델 기준, 2026-03 확인)
 # rate limit 또는 에러 발생 시 순서대로 다음 모델로 자동 전환.
 # 한국어 지원 품질 우수 모델을 상위에 배치.
-# 서로 다른 공급사(Google/Meta/OpenAI/NVIDIA/Mistral) 5개로 분산 → 동시 rate limit 방지
+# 서로 다른 공급사(Google/Meta/DeepSeek/Mistral) 4개로 분산 → 동시 rate limit 방지
 FREE_MODELS = [
     "google/gemma-3-27b-it:free",                           # Gemma 27B — 주력 (Google)
     "meta-llama/llama-3.3-70b-instruct:free",               # Llama 70B — 한국어 우수 (Meta)
-    "qwen/qwen3-next-80b-a3b-instruct:free",                # Qwen3 80B (Alibaba)
-    "nvidia/nemotron-3-super-120b-a12b:free",               # Nemotron 120B (NVIDIA)
+    "deepseek/deepseek-r1:free",                            # DeepSeek R1 — 한국어 우수 (DeepSeek)
+    "deepseek/deepseek-chat-v3-0324:free",                  # DeepSeek V3 — 한국어 우수 (DeepSeek)
     "google/gemma-3-12b-it:free",                           # Gemma 12B — 경량 (Google)
     "mistralai/mistral-small-3.1-24b-instruct:free",        # Mistral 24B — 마지막 폴백
 ]
@@ -40,12 +40,59 @@ REQUEST_DELAY_SECONDS = 3.0
 API_TIMEOUT_SECONDS = 30
 
 # 요약 프롬프트 템플릿
-SUMMARY_PROMPT_TEMPLATE = """다음 뉴스 기사를 한국어로 핵심 내용만 3줄로 요약해주세요. 각 줄은 완결된 문장으로 작성하세요.
+SUMMARY_PROMPT_TEMPLATE = """다음 AI 뉴스 기사를 한국어로 핵심 내용만 정확히 3줄로 요약하세요.
+
+규칙:
+- 반드시 정확히 3줄로만 작성 (그 이상, 그 이하 금지)
+- 각 줄은 완결된 한국어 문장 (30~80자 내외)
+- 번호(1. 2. 3.), 글머리 기호(•, -, *), 제목("요약:", "핵심:") 등 일절 금지
+- 요약 외 다른 텍스트 금지 (설명, 인사말, 부연 없이 3줄 문장만 출력)
 
 제목: {title}
 내용: {content}
 
-요약 (3줄):"""
+한국어 3줄 요약:"""
+
+
+def _clean_summary(raw: str) -> Optional[str]:
+    """AI 응답에서 깨끗한 3줄 요약을 추출한다.
+
+    모델이 번호(1./2./3.), 글머리 기호(•/-/*), 헤더("요약:" 등)를
+    붙여 반환하는 경우가 많으므로 이를 제거하고 최대 3줄만 추출한다.
+    """
+    import re
+
+    if not raw:
+        return None
+
+    text = raw.strip()
+
+    # "요약:", "핵심 내용:", "한국어 3줄 요약:", "Summary:" 같은 헤더 행 제거
+    header_pattern = re.compile(
+        r'^\s*(한국어\s*\d*\s*줄\s*요약|요약|핵심\s*내용|핵심|summary|3줄\s*요약)\s*[:\s]*\s*$',
+        re.IGNORECASE | re.MULTILINE,
+    )
+    text = header_pattern.sub('', text).strip()
+
+    # 줄 분리 후 각 줄 정제
+    lines = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        # 번호 제거: "1. ", "1) ", "① " 등
+        line = re.sub(r'^[\d①②③]+[.)]\s*', '', line)
+        # 글머리 기호 제거: "• ", "- ", "* "
+        line = re.sub(r'^[•\-\*]\s+', '', line)
+        line = line.strip()
+        if len(line) >= 10:  # 너무 짧은 단편은 제외
+            lines.append(line)
+
+    if not lines:
+        return None
+
+    # 최대 3줄
+    return '\n'.join(lines[:3])
 
 
 async def _call_openrouter(
@@ -169,11 +216,15 @@ async def summarize_article(
                 summary = await _call_openrouter(title, content, model, client)
 
                 if summary:
-                    logger.info(
-                        f"{log_prefix} 요약 성공 [{model}]: "
-                        f"{len(summary)}자"
-                    )
-                    return summary
+                    cleaned = _clean_summary(summary)
+                    if cleaned:
+                        logger.info(
+                            f"{log_prefix} 요약 성공 [{model}]: "
+                            f"{len(cleaned)}자"
+                        )
+                        return cleaned
+                    else:
+                        logger.warning(f"{log_prefix} [{model}] 정제 후 빈 요약, 다음 모델 시도")
                 else:
                     logger.warning(f"{log_prefix} [{model}] 빈 요약, 다음 모델 시도")
 
@@ -210,14 +261,8 @@ async def summarize_unsummarized_articles(limit: int = 50) -> dict:
     """
     start_time = time.time()
 
-    all_articles = supabase_db.get_unsummarized_articles()
-
-    # 한도 초과 기사는 이번 실행에서 건너뜀 (마킹 없이 — 다음 실행에서 재시도)
-    if limit and len(all_articles) > limit:
-        logger.info(f"미요약 기사 {len(all_articles)}건 중 최신 {limit}건만 처리")
-        articles = all_articles[:limit]
-    else:
-        articles = all_articles
+    # limit을 DB 쿼리에 직접 전달하여 불필요한 전체 목록 조회 방지
+    articles = supabase_db.get_unsummarized_articles(limit=limit if limit else 100)
 
     total = len(articles)
     success_count = 0
