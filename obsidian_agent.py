@@ -57,6 +57,9 @@ def _write_to_obsidian(title: str, url: str, source_name: str, content: str) -> 
 
 @app.route("/scrap", methods=["POST", "OPTIONS"])
 def scrap():
+    if request.method == "OPTIONS":
+        return "", 204
+
     data = request.get_json(silent=True) or {}
     title = data.get("title", "").strip()
     url = data.get("url", "").strip()
