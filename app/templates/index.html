@@ -489,7 +489,7 @@
         var input  = document.getElementById('agentUrlInput');
         var saveBtn = document.getElementById('agentUrlSaveBtn');
 
-        if (!toggle || !panel || !input) return;
+        if (!toggle || !panel || !input || !saveBtn) return;
 
         // 저장된 URL 복원
         input.value = localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
@@ -502,10 +502,15 @@
 
         saveBtn.addEventListener('click', function() {
             var val = input.value.trim() || DEFAULT_URL;
+            try { new URL(val); } catch (e) {
+                showToast({ type: 'error', title: '잘못된 URL', message: '올바른 URL 형식을 입력하세요. 예: http://localhost:27123' });
+                return;
+            }
             localStorage.setItem(STORAGE_KEY, val);
             showToast({ type: 'success', title: '저장됨', message: '에이전트 URL이 저장되었습니다.' });
             panel.hidden = true;
             toggle.setAttribute('aria-expanded', 'false');
+            toggle.focus();
         });
 
         window.__getAgentUrl = function() {
@@ -545,18 +550,25 @@
                 ? window.__getAgentUrl()
                 : 'http://localhost:27123';
 
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
+
             fetch(agentUrl + '/scrap', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: title, url: url, source_name: sourceName })
+                body: JSON.stringify({ title: title, url: url, source_name: sourceName }),
+                signal: controller.signal
             })
             .then(function(res) {
+                clearTimeout(timeoutId);
                 return res.json().then(function(data) {
                     return { ok: res.ok, status: res.status, data: data };
                 });
             })
             .then(function(result) {
                 if (result.ok) {
+                    // 성공 — 버튼을 완료 상태로 고정
+                    btn.disabled = true;
                     btn.classList.remove('scrap-loading');
                     btn.classList.add('scrap-done');
                     if (iconEl)  iconEl.textContent  = '✅';
@@ -568,12 +580,12 @@
                     _resetScrapBtn(btn, iconEl, labelEl);
                 }
             })
-            .catch(function() {
-                showToast({
-                    type: 'error',
-                    title: '에이전트 연결 실패',
-                    message: 'obsidian_agent.py를 먼저 실행하세요.'
-                });
+            .catch(function(err) {
+                clearTimeout(timeoutId);
+                var msg = (err && err.name === 'AbortError')
+                    ? '요청 시간이 초과되었습니다 (15초). 에이전트 상태를 확인하세요.'
+                    : 'obsidian_agent.py를 먼저 실행하세요.';
+                showToast({ type: 'error', title: '에이전트 연결 실패', message: msg });
                 _resetScrapBtn(btn, iconEl, labelEl);
             });
         }
