@@ -79,7 +79,8 @@ Newsletter/
   - 실행: `pip install flask flask-cors trafilatura lxml_html_clean && python obsidian_agent.py`
   - 버그 수정: OPTIONS preflight 요청 → 즉시 204 반환 (CORS 오류 해결)
   - 버그 수정: Obsidian 저장 경로 수정 (`문서` → `Documents`)
-  - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, 크래시 시 자동 재시작
+  - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, 크래시 시 자동 재시작, `--ssl` 모드로 실행
+  - 에이전트 기본 URL `http://localhost:27123` → `https://localhost:27123` (데스크탑/모바일 모두 HTTPS)
 
 ---
 
