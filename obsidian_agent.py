@@ -19,7 +19,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, origins="*")  # 로컬 전용 데몬 — 모든 출처 허용
 
-OBSIDIAN_DIR = Path.home() / "문서" / "Obsidian" / "02-Areas" / "Journal"
+OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian" / "02-Areas" / "Journal"
 
 
 def _write_to_obsidian(title: str, url: str, source_name: str, content: str) -> str:
