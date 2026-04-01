@@ -9,3 +9,9 @@ apscheduler==3.10.4
 pytz>=2024.1
 aiohttp==3.11.10
 beautifulsoup4==4.12.3
+
+# obsidian_agent.py 의존성 (로컬 전용 — Vercel 배포 제외)
+flask>=3.0.0
+flask-cors>=4.0.0
+trafilatura>=1.12.0
+lxml_html_clean>=0.1.0
