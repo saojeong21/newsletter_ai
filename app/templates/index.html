@@ -476,5 +476,121 @@
 
         container.innerHTML = html;
     })();
+
+    /* ──────────────────────────────────────────
+       Obsidian 에이전트 설정 패널
+    ────────────────────────────────────────── */
+    (function() {
+        var STORAGE_KEY = 'obsidian_agent_url';
+        var DEFAULT_URL = 'http://localhost:27123';
+
+        var toggle = document.getElementById('agentSettingsToggle');
+        var panel  = document.getElementById('agentSettingsPanel');
+        var input  = document.getElementById('agentUrlInput');
+        var saveBtn = document.getElementById('agentUrlSaveBtn');
+
+        if (!toggle || !panel || !input) return;
+
+        // 저장된 URL 복원
+        input.value = localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
+
+        toggle.addEventListener('click', function() {
+            var isOpen = !panel.hidden;
+            panel.hidden = isOpen;
+            toggle.setAttribute('aria-expanded', String(!isOpen));
+        });
+
+        saveBtn.addEventListener('click', function() {
+            var val = input.value.trim() || DEFAULT_URL;
+            localStorage.setItem(STORAGE_KEY, val);
+            showToast({ type: 'success', title: '저장됨', message: '에이전트 URL이 저장되었습니다.' });
+            panel.hidden = true;
+            toggle.setAttribute('aria-expanded', 'false');
+        });
+
+        window.__getAgentUrl = function() {
+            return localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
+        };
+    })();
+
+    /* ──────────────────────────────────────────
+       스크랩 버튼 핸들러
+    ────────────────────────────────────────── */
+    (function() {
+        var scrapBtns = document.querySelectorAll('.scrap-btn');
+        if (!scrapBtns.length) return;
+
+        function handleScrap(btn) {
+            var card = btn.closest('.news-card');
+            if (!card) return;
+
+            var title      = card.getAttribute('data-original-title') || '';
+            var url        = card.getAttribute('data-url') || '';
+            var sourceName = card.getAttribute('data-source-name') || '';
+
+            if (!url || !(url.startsWith('http://') || url.startsWith('https://'))) {
+                showToast({ type: 'error', title: '오류', message: 'URL을 찾을 수 없습니다.' });
+                return;
+            }
+
+            // 로딩 상태
+            btn.disabled = true;
+            btn.classList.add('scrap-loading');
+            var iconEl  = btn.querySelector('.scrap-icon');
+            var labelEl = btn.querySelector('.scrap-label');
+            if (iconEl)  iconEl.textContent  = '⏳';
+            if (labelEl) labelEl.textContent = '저장 중...';
+
+            var agentUrl = (typeof window.__getAgentUrl === 'function')
+                ? window.__getAgentUrl()
+                : 'http://localhost:27123';
+
+            fetch(agentUrl + '/scrap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title, url: url, source_name: sourceName })
+            })
+            .then(function(res) {
+                return res.json().then(function(data) {
+                    return { ok: res.ok, status: res.status, data: data };
+                });
+            })
+            .then(function(result) {
+                if (result.ok) {
+                    btn.classList.remove('scrap-loading');
+                    btn.classList.add('scrap-done');
+                    if (iconEl)  iconEl.textContent  = '✅';
+                    if (labelEl) labelEl.textContent = '저장됨';
+                    showToast({ type: 'success', title: 'Obsidian에 저장됨', message: result.data.file || '' });
+                } else {
+                    var errMsg = (result.data && result.data.error) || '저장에 실패했습니다.';
+                    showToast({ type: 'error', title: '스크랩 실패', message: errMsg });
+                    _resetScrapBtn(btn, iconEl, labelEl);
+                }
+            })
+            .catch(function() {
+                showToast({
+                    type: 'error',
+                    title: '에이전트 연결 실패',
+                    message: 'obsidian_agent.py를 먼저 실행하세요.'
+                });
+                _resetScrapBtn(btn, iconEl, labelEl);
+            });
+        }
+
+        function _resetScrapBtn(btn, iconEl, labelEl) {
+            btn.disabled = false;
+            btn.classList.remove('scrap-loading');
+            if (iconEl)  iconEl.textContent  = '🔖';
+            if (labelEl) labelEl.textContent = '스크랩';
+        }
+
+        scrapBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (btn.classList.contains('scrap-done')) return;
+                handleScrap(btn);
+            });
+        });
+    })();
 </script>
 {% endblock %}
