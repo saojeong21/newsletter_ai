@@ -71,10 +71,16 @@ Newsletter/
   - 해외 소스(TechCrunch, VentureBeat 등) → 영어 3문장 요약
   - `_is_korean_source()` 판별 함수 + `SUMMARY_PROMPT_EN` 템플릿 추가
   - 기존 요약 완료 기사는 재처리 없음 (신규 기사부터 적용)
+- **16차 (04-01)**: Obsidian 저널 스크랩 기능
+  - 기사 카드에 🔖 스크랩 버튼 추가 — 클릭 시 원문 크롤링 후 로컬 Obsidian에 저장
+  - `obsidian_agent.py` 로컬 데몬: trafilatura 크롤링 → `~/문서/Obsidian/02-Areas/Journal/YYYY-MM-DD.md` append (날짜별 단일 파일, `---` 구분)
+  - 에이전트 URL 설정 UI (localStorage) — 모바일 LAN IP 지원, 기본값 `http://localhost:27123`
+  - SSL 옵션 (`--ssl` 플래그, mkcert) — 모바일 혼합 콘텐츠 우회
+  - 실행: `pip install flask flask-cors trafilatura lxml_html_clean && python obsidian_agent.py`
 
 ---
 
-## 현재 상태 (2026-03-17 기준)
+## 현재 상태 (2026-04-01 기준)
 
 | 항목 | 상태 |
 |---|---|
@@ -86,6 +92,7 @@ Newsletter/
 | Vercel Cron | 수집 `0 22 * * *` / 요약 `20 22 * * *` — 백업 유지 |
 | 요약 모델 | 6개 / 4개 공급사 분산 (Google·Meta·DeepSeek·Mistral) |
 | 요약 언어 | 국내 소스 → 한국어 / 해외 소스 → 영어 (15차~) |
+| Obsidian 스크랩 | `obsidian_agent.py` 로컬 데몬 (16차~) |
 
 ---
 
