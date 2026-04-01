@@ -21,6 +21,8 @@
     --accent-mid:      #c7d2fe;
 
     --success:         #10b981;
+    --success-light:   #ecfdf5;
+    --success-mid:     #a7f3d0;
     --warning:         #f59e0b;
     --error:           #ef4444;
 
@@ -1421,6 +1423,7 @@ img {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .scrap-btn {
@@ -1452,8 +1455,8 @@ img {
 
 .scrap-btn.scrap-done {
     color: var(--success);
-    border-color: #a7f3d0;
-    background: #ecfdf5;
+    border-color: var(--success-mid);
+    background: var(--success-light);
     cursor: default;
 }
 
@@ -1559,5 +1562,8 @@ img {
     }
     .agent-settings-panel {
         max-width: 100%;
+    }
+    .agent-settings-toggle {
+        padding: 0.5rem 0.75rem;
     }
 }
