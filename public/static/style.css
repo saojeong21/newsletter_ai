@@ -1415,3 +1415,149 @@ img {
         border: 1px solid #ccc;
     }
 }
+
+/* ── Obsidian 스크랩 버튼 ── */
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.scrap-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.scrap-btn:hover:not(:disabled):not(.scrap-done) {
+    color: var(--accent);
+    border-color: var(--accent-mid);
+    background: var(--accent-light);
+}
+
+.scrap-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.scrap-btn.scrap-done {
+    color: var(--success);
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    cursor: default;
+}
+
+.scrap-btn.scrap-loading {
+    color: var(--text-muted);
+}
+
+.scrap-icon {
+    font-size: 0.85em;
+    line-height: 1;
+}
+
+.scrap-label {
+    font-size: var(--font-size-xs);
+}
+
+/* ── 에이전트 설정 UI ── */
+.agent-settings {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.agent-settings-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.agent-settings-toggle:hover {
+    color: var(--text-secondary);
+    background: var(--surface-alt);
+}
+
+.agent-settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+.agent-url-label {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.agent-url-hint {
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-left: 0.3rem;
+}
+
+.agent-url-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.agent-url-input {
+    flex: 1;
+    padding: 0.4rem 0.75rem;
+    font-size: var(--font-size-sm);
+    font-family: var(--font-body);
+    color: var(--text-primary);
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.agent-url-input:focus {
+    border-color: var(--accent);
+}
+
+/* hidden attribute 지원 */
+[hidden] {
+    display: none !important;
+}
+
+/* 모바일 스크랩 버튼 터치 영역 확보 */
+@media (max-width: 640px) {
+    .scrap-btn {
+        padding: 0.35rem 0.75rem;
+    }
+    .agent-settings {
+        align-items: stretch;
+    }
+    .agent-settings-panel {
+        max-width: 100%;
+    }
+}
