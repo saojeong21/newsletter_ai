@@ -83,6 +83,29 @@
             </button>
         </form>
     </div>
+
+    <!-- 에이전트 URL 설정 (Obsidian 스크랩용) -->
+    <div class="agent-settings" id="agentSettings">
+        <button class="agent-settings-toggle" id="agentSettingsToggle" aria-expanded="false" aria-controls="agentSettingsPanel">
+            <span aria-hidden="true">⚙</span> Obsidian 에이전트 설정
+        </button>
+        <div class="agent-settings-panel" id="agentSettingsPanel" hidden>
+            <label for="agentUrlInput" class="agent-url-label">
+                에이전트 URL
+                <span class="agent-url-hint">(모바일: https://192.168.x.x:27123)</span>
+            </label>
+            <div class="agent-url-row">
+                <input
+                    type="url"
+                    id="agentUrlInput"
+                    class="agent-url-input"
+                    placeholder="http://localhost:27123"
+                    autocomplete="off"
+                >
+                <button class="btn btn-sm btn-primary" id="agentUrlSaveBtn">저장</button>
+            </div>
+        </div>
+    </div>
 </section>
 
 <!-- ── 빠른 날짜 탐색 칩 ── -->
@@ -175,6 +198,9 @@
         data-source="{{ src_key }}"
         data-region="{% if is_domestic %}domestic{% else %}international{% endif %}"
         data-title="{{ article.title | lower }}"
+        data-url="{{ article.url }}"
+        data-source-name="{{ article.source_name }}"
+        data-original-title="{{ article.title }}"
         aria-label="{{ article.source_name }} — {{ article.title }}"
     >
         <div class="card-body">
@@ -211,7 +237,7 @@
                 {% endif %}
             </div>
 
-            <!-- 카드 푸터: 태그 + 원문 링크 -->
+            <!-- 카드 푸터: 태그 + 액션 -->
             <div class="card-footer">
                 <div class="card-tags">
                     <span class="tag-region {% if is_domestic %}domestic{% else %}international{% endif %}">
@@ -221,9 +247,19 @@
                         <span class="ai-badge">AI 요약</span>
                     {% endif %}
                 </div>
-                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
-                    원문 보기 →
-                </a>
+                <div class="card-actions">
+                    <button
+                        class="scrap-btn"
+                        aria-label="Obsidian에 스크랩"
+                        title="Obsidian에 스크랩"
+                    >
+                        <span class="scrap-icon" aria-hidden="true">🔖</span>
+                        <span class="scrap-label">스크랩</span>
+                    </button>
+                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
+                        원문 보기 →
+                    </a>
+                </div>
             </div>
         </div>
     </article>
