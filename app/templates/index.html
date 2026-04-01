@@ -99,7 +99,7 @@
                     type="url"
                     id="agentUrlInput"
                     class="agent-url-input"
-                    placeholder="http://localhost:27123"
+                    placeholder="https://localhost:27123"
                     autocomplete="off"
                 >
                 <button type="button" class="btn btn-sm btn-primary" id="agentUrlSaveBtn" aria-label="에이전트 URL 저장">저장</button>
@@ -482,7 +482,7 @@
     ────────────────────────────────────────── */
     (function() {
         var STORAGE_KEY = 'obsidian_agent_url';
-        var DEFAULT_URL = 'http://localhost:27123';
+        var DEFAULT_URL = 'https://localhost:27123';
 
         var toggle = document.getElementById('agentSettingsToggle');
         var panel  = document.getElementById('agentSettingsPanel');
@@ -503,7 +503,7 @@
         saveBtn.addEventListener('click', function() {
             var val = input.value.trim() || DEFAULT_URL;
             try { new URL(val); } catch (e) {
-                showToast({ type: 'error', title: '잘못된 URL', message: '올바른 URL 형식을 입력하세요. 예: http://localhost:27123' });
+                showToast({ type: 'error', title: '잘못된 URL', message: '올바른 URL 형식을 입력하세요. 예: https://localhost:27123' });
                 return;
             }
             localStorage.setItem(STORAGE_KEY, val);
@@ -548,7 +548,7 @@
 
             var agentUrl = (typeof window.__getAgentUrl === 'function')
                 ? window.__getAgentUrl()
-                : 'http://localhost:27123';
+                : 'https://localhost:27123';
 
             var controller = new AbortController();
             var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
