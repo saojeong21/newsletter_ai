@@ -24,8 +24,9 @@ OBSIDIAN_DIR = Path.home() / "문서" / "Obsidian" / "02-Areas" / "Journal"
 
 def _write_to_obsidian(title: str, url: str, source_name: str, content: str) -> str:
     """Obsidian 저널 파일에 기사를 저장하거나 이어붙인다. 저장된 파일명 반환."""
-    today = datetime.now().strftime("%Y-%m-%d")
-    time_str = datetime.now().strftime("%H:%M")
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%H:%M")
     file_path = OBSIDIAN_DIR / f"{today}.md"
 
     entry = (
@@ -37,16 +38,19 @@ def _write_to_obsidian(title: str, url: str, source_name: str, content: str) -> 
 
     OBSIDIAN_DIR.mkdir(parents=True, exist_ok=True)
 
-    if file_path.exists():
-        with open(file_path, "a", encoding="utf-8") as f:
-            f.write(entry)
-    else:
-        header = (
-            f"---\ndate: {today}\ntags: [AI, newsletter]\n---\n\n"
-            f"# {today} AI 뉴스 스크랩\n"
-        )
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(header + entry)
+    try:
+        if file_path.exists():
+            with open(file_path, "a", encoding="utf-8") as f:
+                f.write(entry)
+        else:
+            header = (
+                f"---\ndate: {today}\ntags: [AI, newsletter]\n---\n\n"
+                f"# {today} AI 뉴스 스크랩\n"
+            )
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(header + entry)
+    except OSError as e:
+        raise RuntimeError(f"Obsidian 파일 쓰기 실패: {e}") from e
 
     return f"{today}.md"
 
@@ -61,8 +65,14 @@ def scrap():
     if not url:
         return jsonify({"error": "유효하지 않은 URL입니다"}), 400
 
-    downloaded = trafilatura.fetch_url(url)
-    content = trafilatura.extract(downloaded) if downloaded else None
+    if not (url.startswith("http://") or url.startswith("https://")):
+        return jsonify({"error": "URL은 http:// 또는 https://로 시작해야 합니다"}), 400
+
+    try:
+        downloaded = trafilatura.fetch_url(url)
+        content = trafilatura.extract(downloaded) if downloaded else None
+    except Exception as e:
+        return jsonify({"error": f"본문 추출 중 오류 발생: {e}"}), 422
 
     if not content:
         return jsonify({"error": "본문을 가져올 수 없습니다"}), 422
@@ -79,9 +89,11 @@ def health():
 def _get_lan_ip() -> str:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
+        try:
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
         return ip
     except Exception:
         return "127.0.0.1"
