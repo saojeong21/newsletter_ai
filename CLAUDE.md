@@ -78,6 +78,8 @@ Newsletter/
   - SSL 옵션 (`--ssl` 플래그, mkcert) — 모바일 혼합 콘텐츠 우회
   - 실행: `pip install flask flask-cors trafilatura lxml_html_clean && python obsidian_agent.py`
   - 버그 수정: OPTIONS preflight 요청 → 즉시 204 반환 (CORS 오류 해결)
+  - 버그 수정: Obsidian 저장 경로 수정 (`문서` → `Documents`)
+  - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, 크래시 시 자동 재시작
 
 ---
 
