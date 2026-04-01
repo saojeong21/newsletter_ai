@@ -71,16 +71,13 @@ Newsletter/
   - 해외 소스(TechCrunch, VentureBeat 등) → 영어 3문장 요약
   - `_is_korean_source()` 판별 함수 + `SUMMARY_PROMPT_EN` 템플릿 추가
   - 기존 요약 완료 기사는 재처리 없음 (신규 기사부터 적용)
-- **16차 (04-01)**: Obsidian 저널 스크랩 기능
+- **16차 (04-01)**: Obsidian 저널 스크랩 기능 (완료)
   - 기사 카드에 🔖 스크랩 버튼 추가 — 클릭 시 원문 크롤링 후 로컬 Obsidian에 저장
-  - `obsidian_agent.py` 로컬 데몬: trafilatura 크롤링 → `~/문서/Obsidian/02-Areas/Journal/YYYY-MM-DD.md` append (날짜별 단일 파일, `---` 구분)
-  - 에이전트 URL 설정 UI (localStorage) — 모바일 LAN IP 지원, 기본값 `http://localhost:27123`
-  - SSL 옵션 (`--ssl` 플래그, mkcert) — 모바일 혼합 콘텐츠 우회
-  - 실행: `pip install flask flask-cors trafilatura lxml_html_clean && python obsidian_agent.py`
-  - 버그 수정: OPTIONS preflight 요청 → 즉시 204 반환 (CORS 오류 해결)
-  - 버그 수정: Obsidian 저장 경로 수정 (`문서` → `Documents`)
-  - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, 크래시 시 자동 재시작, `--ssl` 모드로 실행
-  - 에이전트 기본 URL `http://localhost:27123` → `https://localhost:27123` (데스크탑/모바일 모두 HTTPS)
+  - `obsidian_agent.py` 로컬 데몬: trafilatura 크롤링 → `~/Documents/Obsidian/02-Areas/Journal/YYYY-MM-DD.md` append (날짜별 단일 파일, `---` 구분)
+  - 에이전트 URL 설정 UI (localStorage) — 기본값 `https://localhost:27123` (데스크탑) / `https://192.168.0.10:27123` (모바일)
+  - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, 크래시 시 자동 재시작, `--ssl` 모드로 상시 실행
+  - mkcert SSL (`~/.mkcert/192.168.0.10+1.pem`) — 데스크탑/모바일 HTTPS mixed content 문제 해결
+  - 실행: `pip install flask flask-cors trafilatura lxml_html_clean` (최초 1회, 이후 LaunchAgent 자동 실행)
 
 ---
 
