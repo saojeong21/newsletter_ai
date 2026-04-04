@@ -2,7 +2,7 @@
 
 ## 프로젝트
 
-**Newsletter AI** — 매일 아침 국내외 주요 AI 관련 뉴스를 자동으로 수집·요약해서 보여주는 웹 애플리케이션.
+**Newsletter AI** — 매일 아침 국내외 주요 AI 관련 뉴스를 자동으로 수집해서 보여주는 웹 애플리케이션.
 
 배포 URL: `https://newsletter-ai-saojeong21s-projects.vercel.app`
 GitHub: `https://github.com/saojeong21/newsletter_ai`
@@ -15,10 +15,10 @@ GitHub: `https://github.com/saojeong21/newsletter_ai`
 |---|---|
 | 백엔드 | FastAPI + Jinja2 (SSR) |
 | DB | Supabase PostgreSQL (`ainewsletter_items` 테이블) |
-| AI 요약 | OpenRouter 무료 모델 폴백 (gemma-3-27b → llama-3.3-70b → qwen3-80b → nemotron-120b → gemma-3-12b → mistral-small) |
 | 뉴스 수집 | feedparser RSS (활성 10개 소스, 국내외 AI 기사) |
+| AI 요약 | Obsidian 스크랩 시에만 OpenRouter 무료 모델 폴백 (obsidian_agent.py) |
 | 배포 | Vercel 서버리스 |
-| 자동 수집 | GitHub Actions (주): 3시간마다 수집→요약×2 순차 실행 / Vercel Cron (백업) |
+| 자동 수집 | GitHub Actions (주): 3시간마다 수집 / Vercel Cron (백업) |
 
 ---
 
@@ -29,19 +29,18 @@ Newsletter/
 ├── api/index.py          ← Vercel 진입점 (from app.main import app)
 ├── vercel.json           ← Vercel 빌드/라우팅/Cron 설정
 ├── app/
-│   ├── main.py           ← FastAPI 라우터 (/api/cron/collect, /api/cron/summarize 등)
+│   ├── main.py           ← FastAPI 라우터 (/api/cron/collect 등)
 │   ├── models.py         ← SQLAlchemy 모델 (Article)
 │   ├── database.py       ← SQLite 연결 (로컬 fallback용, 실서버는 Supabase)
 │   ├── supabase_db.py    ← Supabase httpx 직접 호출 (supabase-py 대신)
 │   ├── crawler.py        ← RSS 수집기 (URL 중복 방지)
-│   ├── summarizer.py     ← OpenRouter 연동, 3줄 한국어 요약, 폴백 로직
-│   ├── scheduler.py      ← _async_collection_pipeline() (수집+요약 일괄 실행, limit=20)
+│   ├── scheduler.py      ← _async_collection_pipeline() (수집 전용)
 │   ├── sources.py        ← RSS 소스 목록 + AI 키워드 (활성 10개 / 비활성 5개)
 │   ├── templates/        ← base.html, index.html, news.html
 │   └── static/           ← style.css, favicon.svg
 ├── public/static/        ← Vercel CDN 서빙용 정적 파일 (style.css, favicon.svg)
 ├── .github/workflows/
-│   └── cron.yml          ← GitHub Actions 크론 (3시간마다 수집→요약×2 순차, Vercel 크론 백업)
+│   └── cron.yml          ← GitHub Actions 크론 (3시간마다 수집, Vercel 크론 백업)
 ├── Newsletter_AI.html    ← 브라우저 미리보기용 정적 HTML
 └── PRD.md                ← 상품 기획 문서
 ```
@@ -78,22 +77,23 @@ Newsletter/
   - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, 크래시 시 자동 재시작, `--ssl` 모드로 상시 실행
   - mkcert SSL (`~/.mkcert/192.168.0.10+1.pem`) — 데스크탑/모바일 HTTPS mixed content 문제 해결
   - 실행: `pip install flask flask-cors trafilatura lxml_html_clean` (최초 1회, 이후 LaunchAgent 자동 실행)
+- **17차 (04-04)**: AI 요약을 뉴스레터 파이프라인에서 제거, Obsidian 스크랩 전용으로 이전
+  - `app/summarizer.py` 삭제, `/api/summarize` · `/api/cron/summarize` 엔드포인트 제거
+  - GitHub Actions cron에서 summarize 잡 2개 제거, Vercel Cron에서 summarize 스케줄 제거
+  - 수집 파이프라인은 RSS 수집만 수행, AI 요약은 Obsidian 스크랩 시에만 실행
 
 ---
 
-## 현재 상태 (2026-04-01 기준)
+## 현재 상태 (2026-04-04 기준)
 
 | 항목 | 상태 |
 |---|---|
 | Supabase 연결 | 정상 |
-| 전체 기사 수 | ~527건 |
-| 요약 완료 | 385건 완료 / 미요약 142건 (80건/일 처리 중) |
 | 활성 RSS 소스 | 10개 (비활성 5개) |
-| GitHub Actions 크론 | `0 */3 * * *` 수집→요약×2 순차 — 정상 작동 |
-| Vercel Cron | 수집 `0 22 * * *` / 요약 `20 22 * * *` — 백업 유지 |
-| 요약 모델 | 6개 / 4개 공급사 분산 (Google·Meta·DeepSeek·Mistral) |
-| 요약 언어 | 국내 소스 → 한국어 / 해외 소스 → 영어 (15차~) |
-| Obsidian 스크랩 | `obsidian_agent.py` 로컬 데몬 (16차~) |
+| GitHub Actions 크론 | `0 */3 * * *` 수집 전용 — 정상 작동 |
+| Vercel Cron | 수집 `0 22 * * *` — 백업 유지 |
+| AI 요약 | 뉴스레터 파이프라인에서 제거 (17차~), Obsidian 스크랩 시에만 실행 |
+| Obsidian 스크랩 | `obsidian_agent.py` 로컬 데몬 — 스크랩 시 3줄 AI 요약 포함 (16차~) |
 
 ---
 
@@ -144,7 +144,7 @@ The pattern "api/index.py" defined in `functions` doesn't match any Serverless F
 ### Vercel 플랜 제한 (Hobby)
 - 함수 최대 실행 시간: **60초** (`maxDuration: 300` 설정해도 Hobby에선 60초 적용)
 - Cron Job: 하루 1회, 크론 당 60초 제한
-- 수집(~35초)과 요약(~45초)을 **반드시 별도 크론**으로 분리해야 함
+- 수집 크론만 사용 (AI 요약은 17차에서 파이프라인에서 제거됨)
 
 ---
 
