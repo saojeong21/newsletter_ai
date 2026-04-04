@@ -4,10 +4,6 @@
     {
       "path": "/api/cron/collect",
       "schedule": "0 22 * * *"
-    },
-    {
-      "path": "/api/cron/summarize",
-      "schedule": "20 22 * * *"
     }
   ],
   "builds": [

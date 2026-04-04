@@ -215,19 +215,6 @@ async def trigger_collection():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/summarize", summary="AI 요약 수동 트리거")
-@app.get("/api/summarize", summary="AI 요약 수동 트리거 (GET — Vercel Cron용)")
-async def trigger_summarization(limit: int = 10):
-    """미요약 기사에 대한 AI 요약을 생성한다. limit으로 처리 건수 제한 (기본 10)."""
-    from app.summarizer import summarize_unsummarized_articles
-
-    try:
-        result = await summarize_unsummarized_articles(limit=limit)
-        return {"status": "completed", "result": result}
-    except Exception as e:
-        logger.error(f"요약 오류: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 def _verify_cron_secret(request: Request):
     """Vercel Cron Secret 인증 헬퍼. CRON_SECRET 환경변수가 설정된 경우 검증한다."""
@@ -240,11 +227,7 @@ def _verify_cron_secret(request: Request):
 
 @app.get("/api/cron/collect", summary="Vercel Cron — 매일 오전 7시(KST) RSS 수집")
 async def cron_collect(request: Request):
-    """Vercel Cron Job에서 호출 (UTC 22:00 = KST 07:00). RSS 수집만 실행한다.
-
-    Hobby 플랜 60초 제한 내 완료되도록 수집 단독 실행.
-    요약은 20분 후 /api/cron/summarize가 별도로 처리한다.
-    """
+    """Vercel Cron Job에서 호출 (UTC 22:00 = KST 07:00). RSS 수집만 실행한다."""
     _verify_cron_secret(request)
 
     import asyncio
@@ -259,26 +242,6 @@ async def cron_collect(request: Request):
         logger.error(f"크론 수집 오류: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@app.get("/api/cron/summarize", summary="Vercel Cron — 매일 오전 7시 20분(KST) AI 요약")
-async def cron_summarize(request: Request):
-    """Vercel Cron Job에서 호출 (UTC 22:20 = KST 07:20). 미요약 기사 AI 요약 실행.
-
-    Hobby 플랜 60초 제한: limit=5로 제한.
-    기사당 평균 10초 × 5건 + 딜레이 4 × 2초 = ~58초 (60초 이내 안전).
-    누적 미요약 기사는 매일 5건씩 자동 처리된다.
-    """
-    _verify_cron_secret(request)
-
-    from app.summarizer import summarize_unsummarized_articles
-
-    try:
-        result = await summarize_unsummarized_articles(limit=5)
-        logger.info(f"크론 요약 완료: {result}")
-        return {"status": "completed", "result": result}
-    except Exception as e:
-        logger.error(f"크론 요약 오류: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/stats", summary="수집 통계 조회")

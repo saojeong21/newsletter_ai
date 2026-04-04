@@ -133,34 +133,6 @@ def get_articles_by_date(target_date: date) -> List[ArticleRow]:
         return [ArticleRow.from_dict(row) for row in resp.json()]
 
 
-def get_unsummarized_articles(limit: int = 100) -> List[ArticleRow]:
-    """미요약 기사를 최신순으로 반환한다. limit으로 DB 쿼리 자체를 제한한다."""
-    with _client() as c:
-        resp = c.get(
-            f"{_base_url()}/{TABLE}",
-            headers=_headers(),
-            params={
-                "is_summarized": "eq.false",
-                "order": "collected_at.desc",
-                "select": "*",
-                "limit": str(limit),
-            },
-        )
-        resp.raise_for_status()
-        return [ArticleRow.from_dict(row) for row in resp.json()]
-
-
-def update_summary(article_id: int, summary_ko: Optional[str]) -> bool:
-    with _client() as c:
-        resp = c.patch(
-            f"{_base_url()}/{TABLE}",
-            headers=_service_headers(),
-            params={"id": f"eq.{article_id}"},
-            json={"summary_ko": summary_ko, "is_summarized": True},
-        )
-        resp.raise_for_status()
-        return True
-
 
 def get_available_dates(limit: int = 30) -> List[str]:
     with _client() as c:

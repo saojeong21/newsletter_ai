@@ -52,38 +52,28 @@ def _run_collection_job():
 
 
 async def _async_collection_pipeline() -> dict:
-    """RSS 수집 → AI 요약의 전체 파이프라인을 실행한다.
+    """RSS 수집 파이프라인을 실행한다.
 
     Returns:
-        dict: 수집 및 요약 결과 집계
+        dict: 수집 결과
     """
     import asyncio
     from app.crawler import fetch_all_feeds
-    from app.summarizer import summarize_unsummarized_articles
 
     global _is_collecting
     with _collection_lock:
         _is_collecting = True
 
     try:
-        # 1단계: RSS 피드 수집 (동기 함수를 스레드풀에서 실행)
-        logger.info("1단계: RSS 피드 수집 시작")
+        logger.info("RSS 피드 수집 시작")
         loop = asyncio.get_running_loop()
         crawl_result = await loop.run_in_executor(None, fetch_all_feeds)
         logger.info(f"RSS 수집 결과: {crawl_result}")
-
-        # 2단계: AI 요약 생성 (Vercel maxDuration=300초 내 완료 가능하도록 limit 제한)
-        logger.info("2단계: AI 요약 생성 시작")
-        summary_result = await summarize_unsummarized_articles(limit=20)
-        logger.info(f"요약 결과: {summary_result}")
     finally:
         with _collection_lock:
             _is_collecting = False
 
-    return {
-        "crawl": crawl_result,
-        "summary": summary_result,
-    }
+    return {"crawl": crawl_result}
 
 
 def run_collection_now() -> dict:

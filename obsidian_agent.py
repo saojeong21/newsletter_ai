@@ -6,15 +6,144 @@ Obsidian Agent — 로컬 스크랩 데몬
 """
 
 import argparse
-import socket
+import logging
 import os
+import re
+import socket
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
+import requests
 import trafilatura
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+FREE_MODELS = [
+    "google/gemma-3-27b-it:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "deepseek/deepseek-r1:free",
+    "deepseek/deepseek-chat-v3-0324:free",
+    "google/gemma-3-12b-it:free",
+    "mistralai/mistral-small-3.1-24b-instruct:free",
+]
+
+KOREAN_SOURCES = {"AI타임스", "한국경제 IT", "ZDNet Korea", "전자신문"}
+
+SUMMARY_PROMPT_KO = """다음 AI 뉴스 기사를 한국어로 핵심 내용만 정확히 3줄로 요약하세요.
+
+규칙:
+- 반드시 정확히 3줄로만 작성 (그 이상, 그 이하 금지)
+- 각 줄은 완결된 한국어 문장 (30~80자 내외)
+- 번호(1. 2. 3.), 글머리 기호(•, -, *), 제목("요약:", "핵심:") 등 일절 금지
+- 요약 외 다른 텍스트 금지 (설명, 인사말, 부연 없이 3줄 문장만 출력)
+
+제목: {title}
+내용: {content}
+
+한국어 3줄 요약:"""
+
+SUMMARY_PROMPT_EN = """Summarize the following AI news article in exactly 3 sentences in English.
+
+Rules:
+- Write exactly 3 sentences (no more, no less)
+- Each sentence must be a complete, self-contained statement (20-50 words)
+- No numbering (1. 2. 3.), bullets (• - *), or headers ("Summary:", "Key points:") allowed
+- Output only the 3 sentences, nothing else
+
+Title: {title}
+Content: {content}
+
+3-sentence English summary:"""
+
+
+def _is_korean_source(source_name: str) -> bool:
+    return source_name in KOREAN_SOURCES
+
+
+def _clean_summary(raw: str) -> Optional[str]:
+    if not raw:
+        return None
+
+    text = raw.strip()
+    header_pattern = re.compile(
+        r'^\s*(한국어\s*\d*\s*줄\s*요약|요약|핵심\s*내용|핵심|summary|3줄\s*요약)\s*[:\s]*\s*$',
+        re.IGNORECASE | re.MULTILINE,
+    )
+    text = header_pattern.sub('', text).strip()
+
+    lines = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        line = re.sub(r'^[\d①②③]+[.)]\s*', '', line)
+        line = re.sub(r'^[•\-\*]\s+', '', line)
+        line = line.strip()
+        if len(line) >= 10:
+            lines.append(line)
+
+    if not lines:
+        return None
+
+    return '\n'.join(lines[:3])
+
+
+def _summarize_article(title: str, content: str, source_name: str) -> Optional[str]:
+    """OpenRouter 무료 모델로 기사 3줄 요약 생성 (동기, 폴백 포함)."""
+    if not OPENROUTER_API_KEY:
+        logger.warning("OPENROUTER_API_KEY 미설정 — 요약 생략")
+        return None
+
+    prompt_template = SUMMARY_PROMPT_KO if _is_korean_source(source_name) else SUMMARY_PROMPT_EN
+    prompt = prompt_template.format(title=title, content=content[:2000])
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://ai-newsletter.local",
+        "X-Title": "AI Newsletter",
+    }
+    payload = {
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 300,
+        "temperature": 0.3,
+    }
+
+    for model in FREE_MODELS:
+        try:
+            resp = requests.post(
+                OPENROUTER_BASE_URL,
+                headers=headers,
+                json={**payload, "model": model},
+                timeout=30,
+            )
+            if resp.status_code in (429,) or resp.status_code >= 500:
+                continue
+            if resp.status_code != 200:
+                continue
+
+            data = resp.json()
+            if "error" in data:
+                continue
+
+            raw = data["choices"][0]["message"]["content"].strip()
+            cleaned = _clean_summary(raw)
+            if cleaned:
+                return cleaned
+        except Exception:
+            continue
+
+    return None
 
 app = Flask(__name__)
 CORS(app, origins="*")  # 로컬 전용 데몬 — 모든 출처 허용
@@ -22,17 +151,23 @@ CORS(app, origins="*")  # 로컬 전용 데몬 — 모든 출처 허용
 OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian" / "02-Areas" / "Journal"
 
 
-def _write_to_obsidian(title: str, url: str, source_name: str, content: str) -> str:
+def _write_to_obsidian(title: str, url: str, source_name: str, content: str, summary: Optional[str]) -> str:
     """Obsidian 저널 파일에 기사를 저장하거나 이어붙인다. 저장된 파일명 반환."""
     now = datetime.now()
     today = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H:%M")
     file_path = OBSIDIAN_DIR / f"{today}.md"
 
+    summary_block = ""
+    if summary:
+        label = "**요약:**" if source_name in KOREAN_SOURCES else "**Summary:**"
+        summary_block = f"\n{label}\n{summary}\n"
+
     entry = (
         f"\n## [{title}]({url})\n"
         f"> 출처: {source_name} · 스크랩: {time_str}\n\n"
-        f"{content.strip()}\n\n"
+        f"{content.strip()}\n"
+        f"{summary_block}\n"
         f"---\n"
     )
 
@@ -80,8 +215,10 @@ def scrap():
     if not content:
         return jsonify({"error": "본문을 가져올 수 없습니다"}), 422
 
-    saved_file = _write_to_obsidian(title, url, source_name, content)
-    return jsonify({"status": "ok", "file": saved_file})
+    summary = _summarize_article(title, content, source_name)
+
+    saved_file = _write_to_obsidian(title, url, source_name, content, summary)
+    return jsonify({"status": "ok", "file": saved_file, "summarized": summary is not None})
 
 
 @app.route("/health")

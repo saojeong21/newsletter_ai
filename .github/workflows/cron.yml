@@ -23,38 +23,3 @@ jobs:
             exit 1
           fi
 
-  summarize:
-    name: AI 요약 (1차)
-    needs: collect
-    runs-on: ubuntu-latest
-    steps:
-      - name: Call /api/cron/summarize
-        run: |
-          STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_BYPASS_SECRET }}" \
-            https://newsletter-ai-saojeong21s-projects.vercel.app/api/cron/summarize)
-          echo "HTTP Status: $STATUS"
-          echo "Response: $(cat /tmp/response.txt)"
-          if [ "$STATUS" != "200" ]; then
-            echo "::error::요약 크론 1차 실패 (HTTP $STATUS)"
-            exit 1
-          fi
-
-  summarize2:
-    name: AI 요약 (2차)
-    needs: summarize
-    runs-on: ubuntu-latest
-    steps:
-      - name: Call /api/cron/summarize
-        run: |
-          STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_BYPASS_SECRET }}" \
-            https://newsletter-ai-saojeong21s-projects.vercel.app/api/cron/summarize)
-          echo "HTTP Status: $STATUS"
-          echo "Response: $(cat /tmp/response.txt)"
-          if [ "$STATUS" != "200" ]; then
-            echo "::error::요약 크론 2차 실패 (HTTP $STATUS)"
-            exit 1
-          fi
