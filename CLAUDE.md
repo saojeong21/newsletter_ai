@@ -73,18 +73,25 @@ Newsletter/
 - **16차 (04-01)**: Obsidian 저널 스크랩 기능 (완료)
   - 기사 카드에 🔖 스크랩 버튼 추가 — 클릭 시 원문 크롤링 후 로컬 Obsidian에 저장
   - `obsidian_agent.py` 로컬 데몬: trafilatura 크롤링 → `~/Documents/Obsidian/02-Areas/Journal/YYYY-MM-DD.md` append (날짜별 단일 파일, `---` 구분)
-  - 에이전트 URL 설정 UI (localStorage) — 기본값 `https://localhost:27123` (데스크탑) / `https://192.168.0.10:27123` (모바일)
-  - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, 크래시 시 자동 재시작, `--ssl` 모드로 상시 실행
-  - mkcert SSL (`~/.mkcert/192.168.0.10+1.pem`) — 데스크탑/모바일 HTTPS mixed content 문제 해결
+  - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, `--ssl` 모드로 상시 실행
+  - mkcert SSL (`~/.mkcert/192.168.0.10+1.pem`) — HTTPS 지원
   - 실행: `pip install flask flask-cors trafilatura lxml_html_clean` (최초 1회, 이후 LaunchAgent 자동 실행)
+  - **18차에서 변경**: 브라우저 직접 호출 제거 → Supabase 큐 폴링 방식으로 전환
 - **17차 (04-04)**: AI 요약을 뉴스레터 파이프라인에서 제거, Obsidian 스크랩 전용으로 이전
   - `app/summarizer.py` 삭제, `/api/summarize` · `/api/cron/summarize` 엔드포인트 제거
   - GitHub Actions cron에서 summarize 잡 2개 제거, Vercel Cron에서 summarize 스케줄 제거
   - 수집 파이프라인은 RSS 수집만 수행, AI 요약은 Obsidian 스크랩 시에만 실행
+- **18차 (04-06)**: 스크랩 상태 기기 간 동기화 + 오프라인 큐
+  - 스크랩 상태를 `ainewsletter_items.is_scrapped` (Supabase)에 저장 → 웹/아이폰/아이패드 동기화
+  - `scrap_queue` 테이블 신규 생성 — MacBook 잠자기 중 스크랩 요청을 큐에 저장
+  - 브라우저 → obsidian_agent 직접 호출 제거, `POST /api/scrap` (Vercel) 경유로 변경
+  - `GET /api/scrap/pending` · `POST /api/scrap/done` 엔드포인트 추가 (에이전트용, CRON_SECRET 인증)
+  - `obsidian_agent.py` — 60초 간격 Supabase 큐 폴링 백그라운드 스레드 추가 (재시작 시 즉시 처리)
+  - 프론트엔드: 에이전트 URL 설정 UI 제거, 서버 렌더링으로 is_scrapped 상태 표시
 
 ---
 
-## 현재 상태 (2026-04-04 기준)
+## 현재 상태 (2026-04-06 기준)
 
 | 항목 | 상태 |
 |---|---|
@@ -93,7 +100,8 @@ Newsletter/
 | GitHub Actions 크론 | `0 */3 * * *` 수집 전용 — 정상 작동 |
 | Vercel Cron | 수집 `0 22 * * *` — 백업 유지 |
 | AI 요약 | 뉴스레터 파이프라인에서 제거 (17차~), Obsidian 스크랩 시에만 실행 |
-| Obsidian 스크랩 | `obsidian_agent.py` 로컬 데몬 — 스크랩 시 3줄 AI 요약 포함 (16차~) |
+| Obsidian 스크랩 | Supabase 큐 경유 (18차~) — 기기 간 동기화, MacBook 잠자기 중 큐 보관 후 처리 |
+| 스크랩 상태 동기화 | `ainewsletter_items.is_scrapped` — 웹/아이폰/아이패드 실시간 동기화 |
 
 ---
 
