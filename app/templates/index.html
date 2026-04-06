@@ -84,28 +84,6 @@
         </form>
     </div>
 
-    <!-- 에이전트 URL 설정 (Obsidian 스크랩용) -->
-    <div class="agent-settings" id="agentSettings">
-        <button type="button" class="agent-settings-toggle" id="agentSettingsToggle" aria-expanded="false" aria-controls="agentSettingsPanel">
-            <span aria-hidden="true">⚙</span> Obsidian 에이전트 설정
-        </button>
-        <div class="agent-settings-panel" id="agentSettingsPanel" hidden>
-            <label for="agentUrlInput" class="agent-url-label">
-                에이전트 URL
-                <span class="agent-url-hint">(모바일: https://192.168.x.x:27123)</span>
-            </label>
-            <div class="agent-url-row">
-                <input
-                    type="url"
-                    id="agentUrlInput"
-                    class="agent-url-input"
-                    placeholder="https://localhost:27123"
-                    autocomplete="off"
-                >
-                <button type="button" class="btn btn-sm btn-primary" id="agentUrlSaveBtn" aria-label="에이전트 URL 저장">저장</button>
-            </div>
-        </div>
-    </div>
 </section>
 
 <!-- ── 빠른 날짜 탐색 칩 ── -->
@@ -201,6 +179,7 @@
         data-url="{{ article.url }}"
         data-source-name="{{ article.source_name }}"
         data-original-title="{{ article.title }}"
+        data-scrapped="{{ 'true' if article.is_scrapped else 'false' }}"
         aria-label="{{ article.source_name }} — {{ article.title }}"
     >
         <div class="card-body">
@@ -249,12 +228,13 @@
                 </div>
                 <div class="card-actions">
                     <button
-                        class="scrap-btn"
+                        class="scrap-btn{% if article.is_scrapped %} scrap-done{% endif %}"
                         aria-label="Obsidian에 스크랩"
                         title="Obsidian에 스크랩"
+                        {% if article.is_scrapped %}disabled{% endif %}
                     >
-                        <span class="scrap-icon" aria-hidden="true">🔖</span>
-                        <span class="scrap-label">스크랩</span>
+                        <span class="scrap-icon" aria-hidden="true">{% if article.is_scrapped %}✅{% else %}🔖{% endif %}</span>
+                        <span class="scrap-label">{% if article.is_scrapped %}저장됨{% else %}스크랩{% endif %}</span>
                     </button>
                     <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
                         원문 보기 →
@@ -478,47 +458,6 @@
     })();
 
     /* ──────────────────────────────────────────
-       Obsidian 에이전트 설정 패널
-    ────────────────────────────────────────── */
-    (function() {
-        var STORAGE_KEY = 'obsidian_agent_url';
-        var DEFAULT_URL = 'https://localhost:27123';
-
-        var toggle = document.getElementById('agentSettingsToggle');
-        var panel  = document.getElementById('agentSettingsPanel');
-        var input  = document.getElementById('agentUrlInput');
-        var saveBtn = document.getElementById('agentUrlSaveBtn');
-
-        if (!toggle || !panel || !input || !saveBtn) return;
-
-        // 저장된 URL 복원
-        input.value = localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
-
-        toggle.addEventListener('click', function() {
-            var isOpen = !panel.hidden;
-            panel.hidden = isOpen;
-            toggle.setAttribute('aria-expanded', String(!isOpen));
-        });
-
-        saveBtn.addEventListener('click', function() {
-            var val = input.value.trim() || DEFAULT_URL;
-            try { new URL(val); } catch (e) {
-                showToast({ type: 'error', title: '잘못된 URL', message: '올바른 URL 형식을 입력하세요. 예: https://localhost:27123' });
-                return;
-            }
-            localStorage.setItem(STORAGE_KEY, val);
-            showToast({ type: 'success', title: '저장됨', message: '에이전트 URL이 저장되었습니다.' });
-            panel.hidden = true;
-            toggle.setAttribute('aria-expanded', 'false');
-            toggle.focus();
-        });
-
-        window.__getAgentUrl = function() {
-            return localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
-        };
-    })();
-
-    /* ──────────────────────────────────────────
        스크랩 버튼 핸들러
     ────────────────────────────────────────── */
     (function() {
@@ -538,7 +477,6 @@
                 return;
             }
 
-            // 로딩 상태
             btn.disabled = true;
             btn.classList.add('scrap-loading');
             var iconEl  = btn.querySelector('.scrap-icon');
@@ -546,46 +484,35 @@
             if (iconEl)  iconEl.textContent  = '⏳';
             if (labelEl) labelEl.textContent = '저장 중...';
 
-            var agentUrl = (typeof window.__getAgentUrl === 'function')
-                ? window.__getAgentUrl()
-                : 'https://localhost:27123';
-
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
-
-            fetch(agentUrl + '/scrap', {
+            fetch('/api/scrap', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: title, url: url, source_name: sourceName }),
-                signal: controller.signal
+                body: JSON.stringify({ title: title, url: url, source_name: sourceName })
             })
             .then(function(res) {
-                clearTimeout(timeoutId);
                 return res.json().then(function(data) {
-                    return { ok: res.ok, status: res.status, data: data };
+                    return { ok: res.ok, data: data };
                 });
             })
             .then(function(result) {
                 if (result.ok) {
-                    // 성공 — 버튼을 완료 상태로 고정
                     btn.disabled = true;
                     btn.classList.remove('scrap-loading');
                     btn.classList.add('scrap-done');
                     if (iconEl)  iconEl.textContent  = '✅';
                     if (labelEl) labelEl.textContent = '저장됨';
-                    showToast({ type: 'success', title: 'Obsidian에 저장됨', message: result.data.file || '' });
+                    var msg = result.data.queued
+                        ? 'Obsidian 저장이 예약되었습니다.'
+                        : '이미 스크랩된 기사입니다.';
+                    showToast({ type: 'success', title: '스크랩 완료', message: msg });
                 } else {
-                    var errMsg = (result.data && result.data.error) || '저장에 실패했습니다.';
+                    var errMsg = (result.data && result.data.detail) || '저장에 실패했습니다.';
                     showToast({ type: 'error', title: '스크랩 실패', message: errMsg });
                     _resetScrapBtn(btn, iconEl, labelEl);
                 }
             })
             .catch(function(err) {
-                clearTimeout(timeoutId);
-                var msg = (err && err.name === 'AbortError')
-                    ? '요청 시간이 초과되었습니다 (15초). 에이전트 상태를 확인하세요.'
-                    : 'obsidian_agent.py를 먼저 실행하세요.';
-                showToast({ type: 'error', title: '에이전트 연결 실패', message: msg });
+                showToast({ type: 'error', title: '요청 실패', message: err.message || '네트워크 오류' });
                 _resetScrapBtn(btn, iconEl, labelEl);
             });
         }
