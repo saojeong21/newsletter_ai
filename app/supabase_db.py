@@ -73,6 +73,7 @@ class ArticleRow:
     description: Optional[str] = None
     summary_ko: Optional[str] = None
     is_summarized: bool = False
+    is_scrapped: bool = False
 
     @classmethod
     def from_dict(cls, d: dict) -> "ArticleRow":
@@ -87,6 +88,7 @@ class ArticleRow:
             description=d.get("description"),
             summary_ko=d.get("summary_ko"),
             is_summarized=d.get("is_summarized", False),
+            is_scrapped=d.get("is_scrapped", False),
         )
 
 
@@ -223,3 +225,87 @@ def get_client():
                 resp.raise_for_status()
                 return type("R", (), {"data": resp.json()})()
     return _FakeClient()
+
+
+def mark_article_scrapped(article_url: str) -> bool:
+    """Mark an article as scrapped by URL. Returns True if updated."""
+    with _client() as c:
+        resp = c.patch(
+            f"{_base_url()}/{TABLE}",
+            headers=_service_headers(),
+            params={"url": f"eq.{article_url}"},
+            json={"is_scrapped": True},
+        )
+        resp.raise_for_status()
+        return len(resp.json()) > 0
+
+
+SCRAP_QUEUE_TABLE = "scrap_queue"
+
+
+def enqueue_scrap(article_url: str, title: str, source_name: str) -> Optional[int]:
+    """Add a scrap request to the queue. Returns queue item id."""
+    # Skip if already pending or done for this URL
+    with _client() as c:
+        existing = c.get(
+            f"{_base_url()}/{SCRAP_QUEUE_TABLE}",
+            headers=_service_headers(),
+            params={
+                "article_url": f"eq.{article_url}",
+                "status": "in.(pending,processing,done)",
+                "select": "id",
+                "limit": "1",
+            },
+        )
+        existing.raise_for_status()
+        if existing.json():
+            return None  # Already queued or done
+
+        resp = c.post(
+            f"{_base_url()}/{SCRAP_QUEUE_TABLE}",
+            headers=_service_headers(),
+            json={
+                "article_url": article_url,
+                "title": title,
+                "source_name": source_name,
+            },
+        )
+        resp.raise_for_status()
+        result = resp.json()
+        return result[0]["id"] if result else None
+
+
+def get_pending_scraps(limit: int = 20) -> List[dict]:
+    """Return pending scrap queue items."""
+    with _client() as c:
+        resp = c.get(
+            f"{_base_url()}/{SCRAP_QUEUE_TABLE}",
+            headers=_service_headers(),
+            params={
+                "status": "eq.pending",
+                "order": "created_at.asc",
+                "limit": str(limit),
+                "select": "id,article_url,title,source_name",
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+def complete_scrap(queue_id: int, success: bool, error_message: Optional[str] = None) -> None:
+    """Mark a scrap queue item as done or failed."""
+    payload = {
+        "status": "done" if success else "failed",
+        "processed_at": datetime.utcnow().isoformat(),
+    }
+    if error_message:
+        payload["error_message"] = error_message[:500]
+
+    with _client() as c:
+        resp = c.patch(
+            f"{_base_url()}/{SCRAP_QUEUE_TABLE}",
+            headers=_service_headers(),
+            params={"id": f"eq.{queue_id}"},
+            json=payload,
+        )
+        resp.raise_for_status()
