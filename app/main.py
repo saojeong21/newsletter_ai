@@ -247,3 +247,51 @@ async def cron_collect(request: Request):
 @app.get("/api/stats", summary="수집 통계 조회")
 async def get_stats():
     return supabase_db.get_stats()
+
+
+@app.post("/api/scrap", summary="기사 스크랩 요청 (큐 추가)")
+async def scrap_article(request: Request):
+    """기사를 스크랩 상태로 마킹하고 Obsidian 저장 큐에 추가한다."""
+    data = await request.json()
+    url = (data.get("url") or "").strip()
+    title = (data.get("title") or "").strip()
+    source_name = (data.get("source_name") or "").strip()
+
+    if not url or not (url.startswith("http://") or url.startswith("https://")):
+        raise HTTPException(status_code=400, detail="유효하지 않은 URL입니다")
+
+    try:
+        supabase_db.mark_article_scrapped(url)
+        queue_id = supabase_db.enqueue_scrap(url, title, source_name)
+        return {
+            "status": "ok",
+            "queued": queue_id is not None,
+            "message": "스크랩이 예약되었습니다. MacBook이 켜져 있으면 곧 Obsidian에 저장됩니다.",
+        }
+    except Exception as e:
+        logger.error(f"스크랩 오류: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/scrap/pending", summary="미처리 스크랩 큐 조회 (에이전트용)")
+async def get_pending_scraps(request: Request):
+    """obsidian_agent가 폴링하는 엔드포인트."""
+    _verify_cron_secret(request)
+    items = supabase_db.get_pending_scraps()
+    return {"items": items}
+
+
+@app.post("/api/scrap/done", summary="스크랩 처리 완료 보고 (에이전트용)")
+async def mark_scrap_done(request: Request):
+    """obsidian_agent가 처리 완료 후 호출."""
+    _verify_cron_secret(request)
+    data = await request.json()
+    queue_id = data.get("id")
+    success = data.get("success", True)
+    error_message = data.get("error_message")
+
+    if not queue_id:
+        raise HTTPException(status_code=400, detail="id 필수")
+
+    supabase_db.complete_scrap(queue_id, success, error_message)
+    return {"status": "ok"}
