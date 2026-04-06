@@ -11,6 +11,8 @@ import os
 import re
 import socket
 import sys
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -26,6 +28,11 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+SCRAP_QUEUE_TABLE = "scrap_queue"
+ARTICLES_TABLE = "ainewsletter_items"
+POLL_INTERVAL = 60  # seconds
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 FREE_MODELS = [
@@ -239,6 +246,107 @@ def _get_lan_ip() -> str:
         return "127.0.0.1"
 
 
+def _supabase_headers() -> dict:
+    return {
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+    }
+
+
+def _supabase_base_url() -> str:
+    return f"{SUPABASE_URL}/rest/v1"
+
+
+def _fetch_pending_scraps() -> list:
+    """Supabase에서 pending 상태의 스크랩 큐 항목을 가져온다."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        return []
+    try:
+        resp = requests.get(
+            f"{_supabase_base_url()}/{SCRAP_QUEUE_TABLE}",
+            headers=_supabase_headers(),
+            params={
+                "status": "eq.pending",
+                "order": "created_at.asc",
+                "limit": "20",
+                "select": "id,article_url,title,source_name",
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        logger.error(f"큐 조회 실패: {e}")
+        return []
+
+
+def _update_queue_status(queue_id: int, success: bool, error_message: Optional[str] = None) -> None:
+    """큐 항목의 상태를 done 또는 failed로 업데이트한다."""
+    payload = {
+        "status": "done" if success else "failed",
+        "processed_at": datetime.now().isoformat(),
+    }
+    if error_message:
+        payload["error_message"] = error_message[:500]
+    try:
+        resp = requests.patch(
+            f"{_supabase_base_url()}/{SCRAP_QUEUE_TABLE}",
+            headers=_supabase_headers(),
+            params={"id": f"eq.{queue_id}"},
+            json=payload,
+            timeout=15,
+        )
+        resp.raise_for_status()
+    except Exception as e:
+        logger.error(f"큐 상태 업데이트 실패 (id={queue_id}): {e}")
+
+
+def _process_queue_item(item: dict) -> None:
+    """하나의 큐 항목을 처리: 크롤링 → 요약 → Obsidian 저장."""
+    queue_id = item["id"]
+    url = item["article_url"]
+    title = item.get("title", "")
+    source_name = item.get("source_name", "")
+
+    logger.info(f"큐 처리 시작: [{queue_id}] {title[:50]}")
+
+    try:
+        downloaded = trafilatura.fetch_url(url)
+        content = trafilatura.extract(downloaded) if downloaded else None
+    except Exception as e:
+        _update_queue_status(queue_id, False, f"크롤링 실패: {e}")
+        return
+
+    if not content:
+        _update_queue_status(queue_id, False, "본문 추출 실패")
+        return
+
+    summary = _summarize_article(title, content, source_name)
+    try:
+        saved_file = _write_to_obsidian(title, url, source_name, content, summary)
+        logger.info(f"큐 처리 완료: [{queue_id}] → {saved_file}")
+        _update_queue_status(queue_id, True)
+    except Exception as e:
+        _update_queue_status(queue_id, False, f"Obsidian 저장 실패: {e}")
+
+
+def _poll_queue() -> None:
+    """백그라운드 스레드: 주기적으로 큐를 확인하고 처리한다."""
+    logger.info("큐 폴링 스레드 시작")
+    while True:
+        try:
+            items = _fetch_pending_scraps()
+            if items:
+                logger.info(f"처리할 큐 항목: {len(items)}건")
+            for item in items:
+                _process_queue_item(item)
+        except Exception as e:
+            logger.error(f"큐 폴링 오류: {e}")
+        time.sleep(POLL_INTERVAL)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--ssl", action="store_true", help="mkcert SSL 인증서로 HTTPS 실행 (모바일 지원)")
@@ -246,6 +354,14 @@ if __name__ == "__main__":
 
     lan_ip = _get_lan_ip()
     port = 27123
+
+    # 큐 폴링 스레드 시작 (Supabase 설정이 있을 때만)
+    if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+        poll_thread = threading.Thread(target=_poll_queue, daemon=True)
+        poll_thread.start()
+        logger.info("Supabase 큐 폴링 활성화 (60초 간격)")
+    else:
+        logger.warning("SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 미설정 — 큐 폴링 비활성화")
 
     if args.ssl:
         cert = Path.home() / ".mkcert" / f"{lan_ip}+1.pem"
