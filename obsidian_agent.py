@@ -25,6 +25,11 @@ from flask_cors import CORS
 
 load_dotenv()
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logger = logging.getLogger(__name__)
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
