@@ -163,11 +163,15 @@ CORS(app, origins="*")  # 로컬 전용 데몬 — 모든 출처 허용
 OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian" / "02-Areas" / "Journal"
 
 
-def _write_to_obsidian(title: str, url: str, source_name: str, content: str, summary: Optional[str]) -> str:
+def _write_to_obsidian(title: str, url: str, source_name: str, content: str, summary: Optional[str], scrap_dt: Optional[datetime] = None) -> str:
     """Obsidian 저널 파일에 기사를 저장하거나 이어붙인다. 저장된 파일명 반환."""
-    now = datetime.now()
-    today = now.strftime("%Y-%m-%d")
-    time_str = now.strftime("%H:%M")
+    ref = scrap_dt or datetime.now()
+    # Supabase created_at은 UTC이므로 KST(+9)로 변환
+    if scrap_dt is not None:
+        from datetime import timezone, timedelta as _td
+        ref = scrap_dt + _td(hours=9)
+    today = ref.strftime("%Y-%m-%d")
+    time_str = ref.strftime("%H:%M")
     file_path = OBSIDIAN_DIR / f"{today}.md"
 
     summary_block = ""
@@ -276,7 +280,7 @@ def _fetch_pending_scraps() -> list:
                 "status": "eq.pending",
                 "order": "created_at.asc",
                 "limit": "20",
-                "select": "id,article_url,title,source_name",
+                "select": "id,article_url,title,source_name,created_at",
             },
             timeout=15,
         )
@@ -315,6 +319,15 @@ def _process_queue_item(item: dict) -> None:
     title = item.get("title", "")
     source_name = item.get("source_name", "")
 
+    # created_at(UTC)을 파싱해 파일 날짜 결정에 사용
+    scrap_dt: Optional[datetime] = None
+    raw_created = item.get("created_at")
+    if raw_created:
+        try:
+            scrap_dt = datetime.fromisoformat(raw_created.replace("Z", "+00:00")).replace(tzinfo=None)
+        except Exception:
+            pass
+
     logger.info(f"큐 처리 시작: [{queue_id}] {title[:50]}")
 
     try:
@@ -330,7 +343,7 @@ def _process_queue_item(item: dict) -> None:
 
     summary = _summarize_article(title, content, source_name)
     try:
-        saved_file = _write_to_obsidian(title, url, source_name, content, summary)
+        saved_file = _write_to_obsidian(title, url, source_name, content, summary, scrap_dt)
         logger.info(f"큐 처리 완료: [{queue_id}] → {saved_file}")
         _update_queue_status(queue_id, True)
     except Exception as e:
