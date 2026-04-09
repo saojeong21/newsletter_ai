@@ -88,8 +88,9 @@ Newsletter/
   - `GET /api/scrap/pending` · `POST /api/scrap/done` 엔드포인트 추가 (에이전트용, CRON_SECRET 인증)
   - `obsidian_agent.py` — 60초 간격 Supabase 큐 폴링 백그라운드 스레드 추가 (재시작 시 즉시 처리)
   - 프론트엔드: 에이전트 URL 설정 UI 제거, 서버 렌더링으로 is_scrapped 상태 표시
-- **19차 (04-09)**: obsidian_agent 로깅 수정
-  - `logging.basicConfig()` 추가 — 큐 폴링 스레드 시작/처리 상태가 로그 파일에 기록되지 않던 버그 수정
+- **19차 (04-09)**: obsidian_agent 버그 수정 2건
+  - `logging.basicConfig()` 추가 — 큐 폴링 스레드 상태가 로그에 기록되지 않던 문제 수정
+  - 스크랩 날짜 기준 파일 분리 — `_write_to_obsidian()`이 처리 시각(`now()`) 대신 `created_at`(KST 변환) 기준으로 날짜 파일 결정하도록 수정
   - **운영 주의**: `obsidian_agent.py` 수정 후 반드시 LaunchAgent 재시작 필요 (`launchctl unload/load`)
 
 ---
