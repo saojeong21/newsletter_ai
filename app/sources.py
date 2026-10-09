@@ -32,6 +32,7 @@ RSS_SOURCES: List[RSSSource] = [
         name="The Verge AI",
         url="https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
         category="해외 AI",
+        enabled=False,  # 유료 구독 모델 — 본문 접근 불가 (2026-10-09 제외)
     ),
     RSSSource(
         name="Google AI Blog",
