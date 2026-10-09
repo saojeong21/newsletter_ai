@@ -100,7 +100,7 @@ Newsletter/
 | 항목 | 상태 |
 |---|---|
 | Supabase 연결 | 정상 |
-| 활성 RSS 소스 | 10개 (비활성 5개) |
+| 활성 RSS 소스 | 9개 (비활성 6개) |
 | GitHub Actions 크론 | `0 */3 * * *` 수집 전용 — 정상 작동 |
 | Vercel Cron | 수집 `0 22 * * *` — 백업 유지 |
 | AI 요약 | 뉴스레터 파이프라인에서 제거 (17차~), Obsidian 스크랩 시에만 실행 |
@@ -115,7 +115,6 @@ Newsletter/
 |---|---|---|
 | TechCrunch AI | ✅ 활성 | |
 | VentureBeat AI | ✅ 활성 | feedburner URL로 교체 |
-| The Verge AI | ✅ 활성 | |
 | Google AI Blog | ✅ 활성 | |
 | MIT Technology Review AI | ✅ 활성 | |
 | Hugging Face Blog | ✅ 활성 | 신규 추가 |
@@ -128,6 +127,7 @@ Newsletter/
 | Wired AI | ⏸ 비활성 | 404 |
 | ZDNet Korea | ⏸ 비활성 | 404 |
 | 전자신문 | ⏸ 비활성 | XML 파싱 오류 |
+| The Verge AI | ⏸ 비활성 | 유료 구독 모델 — 제외 (2026-10-09) |
 
 ---
 
