@@ -431,7 +431,7 @@ if __name__ == "__main__":
     if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
         poll_thread = threading.Thread(target=_poll_queue, daemon=True)
         poll_thread.start()
-        logger.info("Supabase 큐 폴링 활성화 (60초 간격)")
+        logger.info(f"Supabase 큐 폴링 활성화 ({POLL_INTERVAL}초 간격)")
     else:
         logger.warning("SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 미설정 — 큐 폴링 비활성화")
 
