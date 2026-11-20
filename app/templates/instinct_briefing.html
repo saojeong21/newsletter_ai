@@ -29,7 +29,43 @@
         </span>
     </div>
     {% endif %}
+
+    {% if selected_date %}
+    <div class="hero-controls">
+        <label for="briefingDatePicker" class="sr-only">브리핑 날짜 선택</label>
+        <input
+            type="date"
+            id="briefingDatePicker"
+            class="date-picker"
+            value="{{ selected_date }}"
+            max="{{ today }}"
+            onchange="location.href='/instinct-briefing?date=' + this.value"
+            aria-label="날짜를 선택하면 해당 날짜 브리핑으로 이동합니다"
+        >
+        {% if newer_date %}
+        <a href="/instinct-briefing?date={{ newer_date }}" class="btn btn-ghost btn-sm">← 최신 브리핑</a>
+        {% endif %}
+        {% if older_date %}
+        <a href="/instinct-briefing?date={{ older_date }}" class="btn btn-ghost btn-sm">이전 브리핑 →</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </section>
+
+{% if available_dates | length > 1 %}
+<nav class="date-nav" aria-label="브리핑 날짜 목록">
+    <span class="date-nav-label">브리핑 날짜:</span>
+    <div class="date-chips">
+        {% for d in available_dates[:10] %}
+        <a
+            href="/instinct-briefing?date={{ d }}"
+            class="date-chip {% if d == selected_date %}active{% endif %}"
+            {% if d == selected_date %}aria-current="page"{% endif %}
+        >{{ d }}</a>
+        {% endfor %}
+    </div>
+</nav>
+{% endif %}
 
 {% if sections %}
 

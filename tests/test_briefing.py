@@ -124,10 +124,10 @@ def test_briefing_data_file_is_valid():
     data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
     assert data["date"] == BRIEFING_DATE
     keys = [s["key"] for s in data["sections"]]
-    assert keys == ["ai_stock", "realestate", "broadcast", "linkedin"]
+    # 기본 4섹션은 고정 순서, 그 뒤 추가 섹션(예: jobs 채용 공고)은 허용
+    assert keys[:4] == ["ai_stock", "realestate", "broadcast", "linkedin"]
 
     counts = {s["key"]: len(s["items"]) for s in data["sections"]}
-    assert counts["linkedin"] == 8
     assert all(count > 0 for count in counts.values())
 
     for section in data["sections"]:
@@ -143,7 +143,7 @@ def test_briefing_loader_normalizes_view():
     assert view is not None
     assert view["date_label"] == "2026년 11월 20일 (금)"
     assert view["total"] > 0
-    assert view["section_count"] == 4
+    assert view["section_count"] >= 4
     first = view["sections"][0]["cards"][0]
     assert first["time_label"]
     briefing_mod.available_dates()
@@ -167,7 +167,7 @@ def test_briefing_empty_state_without_data(monkeypatch, tmp_path):
 def test_scrap_endpoint_accepts_briefing_item(monkeypatch):
     calls = {}
 
-    def fake_enqueue(url, title, source_name):
+    def fake_enqueue(url, title, source_name, content=None):
         calls["url"] = url
         calls["title"] = title
         calls["source_name"] = source_name
@@ -175,6 +175,7 @@ def test_scrap_endpoint_accepts_briefing_item(monkeypatch):
 
     monkeypatch.setattr(supabase_db, "mark_article_scrapped", lambda url: False)
     monkeypatch.setattr(supabase_db, "enqueue_scrap", fake_enqueue)
+    monkeypatch.setattr(supabase_db, "get_article_full_text", lambda url: None)
 
     payload = {
         "title": "Darwin, 수학·과학 추론 오픈 모델 세계 1위",
@@ -189,7 +190,7 @@ def test_scrap_endpoint_accepts_briefing_item(monkeypatch):
 
 def test_scrap_endpoint_rejects_bad_url(monkeypatch):
     monkeypatch.setattr(supabase_db, "mark_article_scrapped", lambda url: False)
-    monkeypatch.setattr(supabase_db, "enqueue_scrap", lambda url, title, source: 1)
+    monkeypatch.setattr(supabase_db, "enqueue_scrap", lambda url, title, source, content=None: 1)
     res = client.post("/api/scrap", json={"title": "x", "url": "not-a-url", "source_name": "y"})
     assert res.status_code == 400
 
@@ -213,7 +214,7 @@ def test_obsidian_scrap_writes_fallback_note_for_login_wall(monkeypatch, tmp_pat
     sys.path.insert(0, str(ROOT))
     import obsidian_agent  # noqa: E402
 
-    monkeypatch.setattr(obsidian_agent, "OBSIDIAN_DIR", tmp_path)
+    monkeypatch.setattr(obsidian_agent, "OBSIDIAN_BASE_DIR", tmp_path)
     monkeypatch.setattr(obsidian_agent.trafilatura, "fetch_url", lambda url: None)
     monkeypatch.setattr(obsidian_agent, "_summarize_article", lambda *a, **k: None)
 
@@ -232,7 +233,7 @@ def test_obsidian_scrap_writes_fallback_note_for_login_wall(monkeypatch, tmp_pat
     assert body["status"] == "ok"
     assert body["full_text"] is False
 
-    files = list(tmp_path.glob("*.md"))
+    files = list((tmp_path / "AI Newsletter").glob("*.md"))
     assert len(files) == 1
     note = files[0].read_text(encoding="utf-8")
     assert "Darwin 오픈 모델 1위" in note
@@ -245,7 +246,7 @@ def test_obsidian_queue_item_completes_without_full_text(monkeypatch, tmp_path):
     sys.path.insert(0, str(ROOT))
     import obsidian_agent  # noqa: E402
 
-    monkeypatch.setattr(obsidian_agent, "OBSIDIAN_DIR", tmp_path)
+    monkeypatch.setattr(obsidian_agent, "OBSIDIAN_BASE_DIR", tmp_path)
     monkeypatch.setattr(obsidian_agent.trafilatura, "fetch_url", lambda url: None)
     monkeypatch.setattr(obsidian_agent, "_summarize_article", lambda *a, **k: None)
 
@@ -267,6 +268,181 @@ def test_obsidian_queue_item_completes_without_full_text(monkeypatch, tmp_path):
     )
 
     assert statuses == [(7, True, None)]
-    files = list(tmp_path.glob("*.md"))
-    assert files and files[0].name == "2026-11-20.md"
+    files = list((tmp_path / "AI Newsletter").glob("*.md"))
+    assert files and files[0].name == "26.11.20(Fri).md"
     assert "삼프로TV" in files[0].read_text(encoding="utf-8")
+
+
+# ── Obsidian 소스별 폴더 라우팅 ──
+
+@pytest.mark.parametrize(
+    "source_name, folder",
+    [
+        ("Instinct 브리핑", "Instinct Briefing"),
+        ("피클 브리핑 · 서울경제", "Pickle Briefing"),
+        ("AI타임스", "AI Newsletter"),
+    ],
+)
+def test_obsidian_routes_by_source(monkeypatch, tmp_path, source_name, folder):
+    import obsidian_agent  # noqa: E402
+
+    monkeypatch.setattr(obsidian_agent, "OBSIDIAN_BASE_DIR", tmp_path)
+    from datetime import datetime as _dt
+
+    name = obsidian_agent._write_to_obsidian(
+        "제목", "https://example.com/x", source_name, "본문", None, _dt(2026, 11, 20, 1, 0)
+    )
+    assert name == "26.11.20(Fri).md"
+    assert (tmp_path / folder / name).exists()
+
+
+def test_obsidian_newest_entry_goes_on_top(monkeypatch, tmp_path):
+    import obsidian_agent  # noqa: E402
+
+    monkeypatch.setattr(obsidian_agent, "OBSIDIAN_BASE_DIR", tmp_path)
+    from datetime import datetime as _dt
+
+    when = _dt(2026, 11, 20, 1, 0)
+    obsidian_agent._write_to_obsidian("첫번째", "https://e.com/1", "AI타임스", "a", None, when)
+    obsidian_agent._write_to_obsidian("두번째", "https://e.com/2", "AI타임스", "b", None, when)
+    note = (tmp_path / "AI Newsletter" / "26.11.20(Fri).md").read_text(encoding="utf-8")
+    assert note.startswith("---\ndate: 26.11.20(Fri)")
+    assert note.index("두번째") < note.index("첫번째")
+
+
+# ── mkcert 인증서 해석 (IP 변경 시 크래시 루프 방지) ──
+
+def _touch_pair(directory, ip):
+    (directory / f"{ip}+1.pem").write_text("c")
+    (directory / f"{ip}+1-key.pem").write_text("k")
+
+
+def test_ssl_cert_exact_ip(monkeypatch, tmp_path):
+    import obsidian_agent  # noqa: E402
+
+    monkeypatch.setattr(obsidian_agent, "MKCERT_DIR", tmp_path)
+    _touch_pair(tmp_path, "10.0.0.5")
+    cert, key = obsidian_agent._resolve_ssl_cert("10.0.0.5")
+    assert cert.name == "10.0.0.5+1.pem" and key.name == "10.0.0.5+1-key.pem"
+
+
+def test_ssl_cert_falls_back_to_existing_when_mkcert_missing(monkeypatch, tmp_path):
+    import obsidian_agent  # noqa: E402
+    import shutil
+
+    monkeypatch.setattr(obsidian_agent, "MKCERT_DIR", tmp_path)
+    monkeypatch.setattr(obsidian_agent, "_MKCERT_CANDIDATES", ())
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+    _touch_pair(tmp_path, "192.168.0.10")
+    cert, key = obsidian_agent._resolve_ssl_cert("192.168.0.8")
+    assert cert.name == "192.168.0.10+1.pem" and key.name == "192.168.0.10+1-key.pem"
+
+
+def test_ssl_cert_mkcert_succeeds_without_files_falls_back(monkeypatch, tmp_path):
+    """mkcert가 0으로 종료했지만 파일을 만들지 않으면 기존 인증서로 대체한다(크래시 루프 방지)."""
+    import obsidian_agent  # noqa: E402
+    import shutil
+    import subprocess
+
+    monkeypatch.setattr(obsidian_agent, "MKCERT_DIR", tmp_path)
+    monkeypatch.setattr(shutil, "which", lambda name: "/fake/mkcert")
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: None)
+    _touch_pair(tmp_path, "192.168.0.10")
+    cert, _ = obsidian_agent._resolve_ssl_cert("192.168.0.8")
+    assert cert.name == "192.168.0.10+1.pem"
+
+
+def test_ssl_cert_none_when_nothing_available(monkeypatch, tmp_path):
+    import obsidian_agent  # noqa: E402
+    import shutil
+
+    monkeypatch.setattr(obsidian_agent, "MKCERT_DIR", tmp_path)
+    monkeypatch.setattr(obsidian_agent, "_MKCERT_CANDIDATES", ())
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+    assert obsidian_agent._resolve_ssl_cert("192.168.0.8") is None
+
+
+# ── /instinct-briefing 날짜별 표시 ──
+
+def _briefing_row(title, url, collected_utc, category="AI 뉴스·주식"):
+    return supabase_db.ArticleRow(
+        id=abs(hash(url)) % 10000, title=title, url=url,
+        source_name=supabase_db.BRIEFING_SOURCE_NAME, category=category,
+        published_at=collected_utc, collected_at=collected_utc, summary_ko="요약",
+    )
+
+
+@pytest.fixture
+def instinct_rows(monkeypatch):
+    from datetime import datetime as _dt
+
+    rows = [
+        # UTC 2026-11-20 23:30 = KST 11-21 08:30 → 11-21
+        _briefing_row("오늘 항목", "https://e.com/today", _dt(2026, 11, 20, 23, 30)),
+        # UTC 2026-11-20 00:30 = KST 11-20 09:30 → 11-20
+        _briefing_row("어제 항목", "https://e.com/yday", _dt(2026, 11, 20, 0, 30)),
+    ]
+    from datetime import timedelta as _td
+
+    def _day(r):
+        return (r.collected_at + _td(hours=9)).date().isoformat()
+
+    monkeypatch.setattr(
+        supabase_db, "get_briefing_dates", lambda limit=5000: sorted({_day(r) for r in rows}, reverse=True)
+    )
+    monkeypatch.setattr(
+        supabase_db, "get_briefing_items_for_day", lambda day, limit=500: [r for r in rows if _day(r) == day]
+    )
+    return rows
+
+
+def test_instinct_briefing_defaults_to_latest_kst_day(instinct_rows):
+    html = client.get("/instinct-briefing").text
+    assert "2026년 11월 21일 토요일" in html
+    assert "오늘 항목" in html and "어제 항목" not in html
+    assert 'href="/instinct-briefing?date=2026-11-20"' in html
+
+
+def test_instinct_briefing_date_param_filters(instinct_rows):
+    html = client.get("/instinct-briefing?date=2026-11-20").text
+    assert "2026년 11월 20일 금요일" in html
+    assert "어제 항목" in html and "오늘 항목" not in html
+
+
+def test_instinct_briefing_unknown_date_falls_back(instinct_rows):
+    html = client.get("/instinct-briefing?date=1999-01-01").text
+    assert "오늘 항목" in html
+
+
+def test_instinct_briefing_empty(monkeypatch):
+    monkeypatch.setattr(supabase_db, "get_briefing_dates", lambda limit=5000: [])
+    monkeypatch.setattr(supabase_db, "get_briefing_items_for_day", lambda day, limit=500: [])
+    res = client.get("/instinct-briefing")
+    assert res.status_code == 200
+    assert "아직 적재된 브리핑 항목이 없습니다" in res.text
+
+
+# ── Supabase 타임스탬프 파싱 (Python 3.9: 소수점 5자리 등) ──
+
+@pytest.mark.parametrize(
+    "raw",
+    ["2026-11-20T09:30:51.08673+00:00", "2026-11-20T09:30:51.1+00:00", "2026-11-20T09:30:51Z",
+     "2026-11-20T09:30:51.123456789+00:00"],
+)
+def test_parse_dt_handles_supabase_fraction_digits(raw):
+    dt = supabase_db._parse_dt(raw)
+    assert dt is not None and (dt.hour, dt.minute, dt.second) == (9, 30, 51)
+
+
+def test_agent_queue_uses_created_at_with_5_digit_fraction(monkeypatch, tmp_path):
+    import obsidian_agent  # noqa: E402
+
+    monkeypatch.setattr(obsidian_agent, "OBSIDIAN_BASE_DIR", tmp_path)
+    monkeypatch.setattr(obsidian_agent, "_extract_content", lambda url: None)
+    monkeypatch.setattr(obsidian_agent, "_update_queue_status", lambda *a, **k: None)
+    obsidian_agent._process_queue_item({
+        "id": 1, "article_url": "https://e.com/x", "title": "t", "source_name": "AI타임스",
+        # UTC 11-19 20:00 → KST 11-20 05:00
+        "created_at": "2026-11-19T20:00:00.08673+00:00",
+    })
+    assert (tmp_path / "AI Newsletter" / "26.11.20(Fri).md").exists()

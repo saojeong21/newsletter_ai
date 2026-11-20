@@ -146,9 +146,32 @@ async def news_archive(
 
 
 @app.get("/instinct-briefing", response_class=HTMLResponse, summary="Instinct 브리핑")
-async def instinct_briefing(request: Request):
-    """POST /api/briefing으로 적재된 Instinct 브리핑 항목을 카테고리 섹션별 카드로 보여준다."""
-    articles = supabase_db.get_briefing_items()
+async def instinct_briefing(
+    request: Request,
+    date: Optional[str] = None,
+):
+    """POST /api/briefing으로 적재된 Instinct 브리핑 항목을 카테고리 섹션별 카드로 보여준다.
+
+    ?date=YYYY-MM-DD (KST 적재일) 로 날짜를 고른다. 없거나 해당 날짜 항목이 없으면 최신 날짜.
+    """
+    # 날짜 목록은 collected_at만 가볍게 조회하고, 항목은 선택한 날짜 범위로 DB에서 거른다
+    dates = supabase_db.get_briefing_dates()
+
+    selected = None
+    if date:
+        try:
+            selected = datetime.strptime(date, "%Y-%m-%d").date().isoformat()
+        except ValueError:
+            selected = None
+    if selected not in dates:
+        selected = dates[0] if dates else None
+
+    articles = supabase_db.get_briefing_items_for_day(selected) if selected else []
+    newer_date = older_date = None
+    if selected:
+        idx = dates.index(selected)
+        newer_date = dates[idx - 1] if idx > 0 else None
+        older_date = dates[idx + 1] if idx + 1 < len(dates) else None
 
     # 카테고리별 그룹핑 (고정 순서 + 미분류는 '기타'로 맨 뒤)
     grouped: dict = {}
@@ -167,11 +190,10 @@ async def instinct_briefing(request: Request):
             "no": len(sections) + 1, "count": len(cards), "cards": cards,
         })
 
-    # 가장 최근 항목의 날짜를 KST 기준 날짜 라벨로 표시
+    # 선택된 KST 날짜를 라벨로 표시
     date_label = None
-    if articles:
-        latest = max(a.collected_at or a.published_at for a in articles)
-        kst = latest + timedelta(hours=9)
+    if selected:
+        kst = datetime.strptime(selected, "%Y-%m-%d")
         weekdays_ko = ["월", "화", "수", "목", "금", "토", "일"]
         date_label = f"{kst.year}년 {kst.month}월 {kst.day}일 {weekdays_ko[kst.weekday()]}요일"
 
@@ -181,6 +203,11 @@ async def instinct_briefing(request: Request):
             "request": request,
             "sections": sections,
             "date_label": date_label,
+            "selected_date": selected or "",
+            "available_dates": dates,
+            "newer_date": newer_date,
+            "older_date": older_date,
+            "today": (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d"),
             "article_count": len(articles),
             "section_count": len(sections),
         },

@@ -3,6 +3,7 @@
 # supabase-py의 HTTP/2 호환 문제를 우회하기 위해 http2=False로 강제.
 
 import logging
+import re
 import os
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -54,9 +55,19 @@ def _parse_dt(s: Optional[str]) -> Optional[datetime]:
     if not s:
         return None
     try:
-        return datetime.fromisoformat(s.replace("Z", "+00:00")).replace(tzinfo=None)
+        return datetime.fromisoformat(_normalize_iso(s)).replace(tzinfo=None)
     except Exception:
         return None
+
+
+def _normalize_iso(s: str) -> str:
+    """Python 3.9~3.10 fromisoformat은 소수점 3/6자리만 허용한다.
+    Supabase는 '...:51.08673+00:00'처럼 끝자리 0을 생략하므로 6자리로 맞춘다."""
+    s = s.replace("Z", "+00:00")
+    m = re.match(r"^(.*T\d{2}:\d{2}:\d{2})\.(\d+)(.*)$", s)
+    if m:
+        s = f"{m.group(1)}.{m.group(2)[:6].ljust(6, '0')}{m.group(3)}"
+    return s
 
 
 @dataclass
@@ -369,6 +380,49 @@ def get_briefing_items(limit: int = 100) -> List[ArticleRow]:
                 "limit": str(limit),
                 "select": "*",
             },
+        )
+        resp.raise_for_status()
+        return [ArticleRow.from_dict(row) for row in resp.json()]
+
+
+def get_briefing_dates(limit: int = 5000) -> List[str]:
+    """Instinct 브리핑이 있는 KST 날짜 목록 (최신순). collected_at만 조회해 가볍게 처리한다."""
+    with _client() as c:
+        resp = c.get(
+            f"{_base_url()}/{TABLE}",
+            headers=_headers(),
+            params={
+                "source_name": f"eq.{BRIEFING_SOURCE_NAME}",
+                "order": "collected_at.desc",
+                "limit": str(limit),
+                "select": "collected_at",
+            },
+        )
+        resp.raise_for_status()
+    days = {
+        (dt + timedelta(hours=9)).date().isoformat()
+        for dt in (_parse_dt(r.get("collected_at")) for r in resp.json())
+        if dt is not None
+    }
+    return sorted(days, reverse=True)
+
+
+def get_briefing_items_for_day(day: str, limit: int = 500) -> List[ArticleRow]:
+    """KST 날짜(YYYY-MM-DD)에 적재된 Instinct 브리핑 항목 (최신순)."""
+    start_utc = datetime.strptime(day, "%Y-%m-%d") - timedelta(hours=9)
+    end_utc = start_utc + timedelta(days=1)
+    with _client() as c:
+        resp = c.get(
+            f"{_base_url()}/{TABLE}",
+            headers=_headers(),
+            params=[
+                ("source_name", f"eq.{BRIEFING_SOURCE_NAME}"),
+                ("collected_at", f"gte.{start_utc.isoformat()}"),
+                ("collected_at", f"lt.{end_utc.isoformat()}"),
+                ("order", "collected_at.desc"),
+                ("limit", str(limit)),
+                ("select", "*"),
+            ],
         )
         resp.raise_for_status()
         return [ArticleRow.from_dict(row) for row in resp.json()]

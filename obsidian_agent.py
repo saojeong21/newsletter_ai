@@ -379,7 +379,12 @@ def _process_queue_item(item: dict) -> None:
     raw_created = item.get("created_at")
     if raw_created:
         try:
-            scrap_dt = datetime.fromisoformat(raw_created.replace("Z", "+00:00")).replace(tzinfo=None)
+            # Python 3.9 fromisoformat은 소수점 3/6자리만 허용 — Supabase의 5자리 등을 6자리로 맞춘다
+            iso = raw_created.replace("Z", "+00:00")
+            m = re.match(r"^(.*T\d{2}:\d{2}:\d{2})\.(\d+)(.*)$", iso)
+            if m:
+                iso = f"{m.group(1)}.{m.group(2)[:6].ljust(6, '0')}{m.group(3)}"
+            scrap_dt = datetime.fromisoformat(iso).replace(tzinfo=None)
         except Exception:
             pass
 
@@ -422,6 +427,55 @@ def _poll_queue() -> None:
         time.sleep(POLL_INTERVAL)
 
 
+MKCERT_DIR = Path.home() / ".mkcert"
+# launchd는 PATH가 최소한이라 Homebrew 경로를 직접 확인한다
+_MKCERT_CANDIDATES = ("/opt/homebrew/bin/mkcert", "/usr/local/bin/mkcert")
+
+
+def _resolve_ssl_cert(lan_ip: str) -> Optional[tuple]:
+    """현재 LAN IP용 mkcert 인증서 (cert, key) 경로를 돌려준다.
+
+    1) ~/.mkcert/{ip}+1.pem 이 있으면 사용
+    2) 없으면(DHCP로 IP가 바뀐 경우) mkcert로 자동 생성
+    3) 생성도 실패하면 가장 최근 인증서로 대체 — SAN에 localhost가 있어 데스크톱 접속은 유지된다
+    전부 실패하면 None.
+    """
+    import shutil
+    import subprocess
+
+    cert = MKCERT_DIR / f"{lan_ip}+1.pem"
+    key = MKCERT_DIR / f"{lan_ip}+1-key.pem"
+    if cert.exists() and key.exists():
+        return cert, key
+
+    mkcert_bin = shutil.which("mkcert") or next((p for p in _MKCERT_CANDIDATES if Path(p).exists()), None)
+    if mkcert_bin:
+        try:
+            MKCERT_DIR.mkdir(parents=True, exist_ok=True)
+            subprocess.run(
+                [mkcert_bin, "-cert-file", str(cert), "-key-file", str(key), lan_ip, "localhost"],
+                check=True, capture_output=True, timeout=30,
+            )
+            if cert.exists() and key.exists():
+                logger.info(f"LAN IP 변경 감지 — mkcert 인증서 자동 생성: {cert.name}")
+                return cert, key
+            logger.warning("mkcert는 성공했지만 인증서 파일이 없습니다 — 기존 인증서로 대체 시도")
+        except Exception as e:
+            logger.warning(f"mkcert 인증서 자동 생성 실패: {e}")
+
+    existing = sorted(
+        (p for p in MKCERT_DIR.glob("*+1.pem") if not p.name.endswith("-key.pem")),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    ) if MKCERT_DIR.is_dir() else []
+    for c in existing:
+        k = c.with_name(c.name[: -len(".pem")] + "-key.pem")
+        if k.exists():
+            logger.warning(f"현재 IP({lan_ip})용 인증서가 없어 {c.name}로 대체합니다 (모바일 LAN 접속은 인증서 경고 가능)")
+            return c, k
+    return None
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--ssl", action="store_true", help="mkcert SSL 인증서로 HTTPS 실행 (모바일 지원)")
@@ -438,14 +492,17 @@ if __name__ == "__main__":
     else:
         logger.warning("SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 미설정 — 큐 폴링 비활성화")
 
-    if args.ssl:
-        cert = Path.home() / ".mkcert" / f"{lan_ip}+1.pem"
-        key  = Path.home() / ".mkcert" / f"{lan_ip}+1-key.pem"
-        if not cert.exists() or not key.exists():
-            print(f"[오류] mkcert 인증서가 없습니다. 먼저 실행하세요:")
-            print(f"  mkcert -install")
-            print(f"  mkcert -cert-file ~/.mkcert/{lan_ip}+1.pem -key-file ~/.mkcert/{lan_ip}+1-key.pem {lan_ip} localhost")
-            sys.exit(1)
+    ssl_pair = _resolve_ssl_cert(lan_ip) if args.ssl else None
+    if args.ssl and ssl_pair is None:
+        # 인증서가 전혀 없을 때 종료하면 launchd KeepAlive가 5초마다 재시작해 크래시 루프가 된다.
+        # 큐 폴링은 HTTP 여부와 무관하므로 HTTP로라도 계속 띄운다.
+        logger.error(
+            "mkcert 인증서를 찾거나 만들 수 없어 HTTP로 실행합니다. 직접 생성: "
+            f"mkcert -cert-file ~/.mkcert/{lan_ip}+1.pem -key-file ~/.mkcert/{lan_ip}+1-key.pem {lan_ip} localhost"
+        )
+
+    if ssl_pair:
+        cert, key = ssl_pair
         print(f"Obsidian Agent (HTTPS) running on https://0.0.0.0:{port}")
         print(f"LAN access (mobile): https://{lan_ip}:{port}")
         ssl_ctx = (str(cert), str(key))
