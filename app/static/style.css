@@ -186,6 +186,7 @@ img {
 
 .nav-link {
     padding: 0.4rem 0.75rem;
+    white-space: nowrap;
     border-radius: var(--radius-pill);
     font-size: var(--font-size-sm);
     font-weight: 500;
@@ -1377,6 +1378,11 @@ img {
 
 /* ── 23. 반응형 ── */
 @media (max-width: 480px) {
+    .header-nav {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
     .header-nav .nav-link {
         padding: 0.35rem 0.5rem;
         font-size: var(--font-size-xs);
@@ -1489,5 +1495,222 @@ img {
 @media (max-width: 640px) {
     .scrap-btn {
         padding: 0.35rem 0.75rem;
+    }
+}
+/* ── 26. 모닝 브리핑 (/briefing) ── */
+.briefing-hero {
+    padding: 2.5rem 1rem 1.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.briefing-headline {
+    max-width: 780px;
+    margin: 0 auto 1.5rem;
+    font-size: var(--font-size-md);
+    line-height: 1.8;
+    color: var(--text-secondary);
+    word-break: keep-all;
+}
+
+.briefing-coverage {
+    margin-top: 1rem;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+}
+
+/* 섹션 필터 알약 안의 건수 */
+.filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    padding: 0 4px;
+    margin-left: 2px;
+    border-radius: var(--radius-pill);
+    background: rgba(99,102,241,0.12);
+    color: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+}
+
+.filter-pill.active .filter-count {
+    background: rgba(255,255,255,0.24);
+}
+
+/* 섹션 블록 */
+.briefing-section {
+    margin-bottom: 2.5rem;
+}
+
+.briefing-section[data-hidden="true"] {
+    display: none;
+}
+
+.briefing-section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.875rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.briefing-section-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    background: var(--section-color, var(--accent));
+    color: #ffffff;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 3px 10px rgba(17,24,39,0.12);
+}
+
+.briefing-section-titles {
+    min-width: 0;
+    flex: 1;
+}
+
+.briefing-section-title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.35;
+}
+
+.briefing-section-lead {
+    margin-top: 0.25rem;
+    font-size: var(--font-size-sm);
+    line-height: 1.7;
+    color: var(--text-secondary);
+    word-break: keep-all;
+}
+
+.briefing-section-count {
+    flex-shrink: 0;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 0.15rem 0.55rem;
+    white-space: nowrap;
+}
+
+/* 브리핑 카드 세부 */
+.briefing-card .card-title {
+    font-size: var(--font-size-md);
+}
+
+.briefing-card.is-highlight {
+    border-left: 3px solid var(--section-color, var(--accent));
+}
+
+.card-author {
+    display: block;
+    margin-top: 1px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-note {
+    margin-top: 0.5rem;
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.tag-topic {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.briefing-pin {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+}
+
+/* 안내 노트 */
+.briefing-notes {
+    margin-top: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.briefing-notes-title {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.625rem;
+}
+
+.briefing-notes-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.briefing-notes-list li {
+    position: relative;
+    padding-left: 0.875rem;
+    font-size: var(--font-size-xs);
+    line-height: 1.7;
+    color: var(--text-secondary);
+    word-break: keep-all;
+}
+
+.briefing-notes-list li::before {
+    content: '·';
+    position: absolute;
+    left: 0.125rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .briefing-section-header {
+        flex-wrap: wrap;
+    }
+
+    .briefing-section-count {
+        order: 3;
+        margin-left: 38px;
+    }
+
+    .search-filter-bar {
+        position: static;
     }
 }

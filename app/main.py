@@ -5,7 +5,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -27,6 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 import app.supabase_db as supabase_db
+from app.briefing import available_dates as briefing_available_dates, load_briefing
 from app.scheduler import is_collecting, run_collection_now, start_scheduler, stop_scheduler
 
 # 템플릿 및 정적 파일 경로
@@ -136,6 +137,49 @@ async def news_archive(
             "selected_date": target_date.isoformat(),
             "available_dates": available_dates,
             "article_count": len(articles),
+        },
+    )
+
+
+@app.get("/briefing", response_class=HTMLResponse, summary="모닝 브리핑 (AI·주식 / 부동산 / 경제방송 / 링크드인)")
+async def morning_briefing(
+    request: Request,
+    date: Optional[str] = None,
+):
+    """저장소의 data/briefings/YYYY-MM-DD.json 을 읽어 모닝 브리핑 페이지를 렌더링한다."""
+    dates = briefing_available_dates()
+
+    selected = None
+    if date:
+        try:
+            selected = datetime.strptime(date, "%Y-%m-%d").date().isoformat()
+        except ValueError:
+            selected = None
+
+    # 요청 날짜에 브리핑이 없으면 가장 최신 브리핑으로 대체
+    if selected not in dates:
+        selected = dates[0] if dates else None
+
+    briefing = load_briefing(selected) if selected else None
+
+    newer_date = None
+    older_date = None
+    if selected and selected in dates:
+        idx = dates.index(selected)
+        newer_date = dates[idx - 1] if idx > 0 else None
+        older_date = dates[idx + 1] if idx + 1 < len(dates) else None
+
+    return templates.TemplateResponse(
+        "briefing.html",
+        {
+            "request": request,
+            "briefing": briefing,
+            "selected_date": selected or "",
+            "available_dates": dates,
+            "newer_date": newer_date,
+            "older_date": older_date,
+            # 날짜 선택기 max 값 — Vercel(UTC)에서도 한국 날짜 기준으로 계산한다
+            "today": (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d"),
         },
     )
 

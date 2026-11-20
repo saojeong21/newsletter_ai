@@ -207,6 +207,31 @@ def _write_to_obsidian(title: str, url: str, source_name: str, content: str, sum
     return f"{today}.md"
 
 
+def _fallback_body(title: str, url: str, source_name: str) -> str:
+    """본문 자동 추출 실패 시 사용할 기본 노트 본문.
+
+    링크드인(로그인 벽)이나 유튜브(영상 페이지)처럼 trafilatura가 본문을 얻지 못하는
+    항목도 빈손으로 실패시키지 않고, 제목·출처·링크를 남긴 노트를 만든다.
+    """
+    return (
+        "> ⚠️ 본문 자동 추출 실패 — 원문에서 직접 확인하세요. "
+        "(로그인이 필요하거나 영상 페이지일 수 있습니다.)\n\n"
+        f"- 제목: {title}\n"
+        f"- 출처: {source_name}\n"
+        f"- 링크: {url}\n"
+    )
+
+
+def _extract_content(url: str) -> Optional[str]:
+    """trafilatura로 본문을 추출한다. 네트워크·파싱 오류는 예외 대신 None으로 돌려준다."""
+    try:
+        downloaded = trafilatura.fetch_url(url)
+        return trafilatura.extract(downloaded) if downloaded else None
+    except Exception as e:
+        logger.warning(f"본문 크롤링 실패 ({url}): {e}")
+        return None
+
+
 @app.route("/scrap", methods=["POST", "OPTIONS"])
 def scrap():
     if request.method == "OPTIONS":
@@ -223,19 +248,30 @@ def scrap():
     if not (url.startswith("http://") or url.startswith("https://")):
         return jsonify({"error": "URL은 http:// 또는 https://로 시작해야 합니다"}), 400
 
+    content = _extract_content(url)
+
+    # 본문을 못 가져와도 기본 노트(제목·출처·링크)는 저장한다.
+    # 링크드인·유튜브처럼 구조적으로 본문 추출이 불가능한 링크가 여기서 막히지 않도록 한다.
+    full_text = bool(content)
+    summary = _summarize_article(title, content, source_name) if full_text else None
+
     try:
-        downloaded = trafilatura.fetch_url(url)
-        content = trafilatura.extract(downloaded) if downloaded else None
-    except Exception as e:
-        return jsonify({"error": f"본문 추출 중 오류 발생: {e}"}), 422
+        saved_file = _write_to_obsidian(
+            title,
+            url,
+            source_name,
+            content or _fallback_body(title, url, source_name),
+            summary,
+        )
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 500
 
-    if not content:
-        return jsonify({"error": "본문을 가져올 수 없습니다"}), 422
-
-    summary = _summarize_article(title, content, source_name)
-
-    saved_file = _write_to_obsidian(title, url, source_name, content, summary)
-    return jsonify({"status": "ok", "file": saved_file, "summarized": summary is not None})
+    return jsonify({
+        "status": "ok",
+        "file": saved_file,
+        "summarized": summary is not None,
+        "full_text": full_text,
+    })
 
 
 @app.route("/health")
@@ -336,21 +372,18 @@ def _process_queue_item(item: dict) -> None:
     if content:
         logger.info(f"큐에 포함된 전문 사용 (재수집 생략): [{queue_id}]")
     else:
-        try:
-            downloaded = trafilatura.fetch_url(url)
-            content = trafilatura.extract(downloaded) if downloaded else None
-        except Exception as e:
-            _update_queue_status(queue_id, False, f"크롤링 실패: {e}")
-            return
+        content = _extract_content(url)
+    full_text = bool(content)
 
-    if not content:
-        _update_queue_status(queue_id, False, "본문 추출 실패")
-        return
+    if not full_text:
+        # 로그인 벽(링크드인)·영상 페이지(유튜브) 등은 본문 대신 기본 노트로 저장한다.
+        logger.info(f"본문 추출 실패 — 기본 노트로 저장: [{queue_id}] {url[:80]}")
+        content = _fallback_body(title, url, source_name)
 
-    summary = _summarize_article(title, content, source_name)
+    summary = _summarize_article(title, content, source_name) if full_text else None
     try:
         saved_file = _write_to_obsidian(title, url, source_name, content, summary, scrap_dt)
-        logger.info(f"큐 처리 완료: [{queue_id}] → {saved_file}")
+        logger.info(f"큐 처리 완료: [{queue_id}] → {saved_file} (full_text={full_text})")
         _update_queue_status(queue_id, True)
     except Exception as e:
         _update_queue_status(queue_id, False, f"Obsidian 저장 실패: {e}")

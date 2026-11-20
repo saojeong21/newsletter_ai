@@ -1,0 +1,594 @@
+{
+  "date": "2026-11-20",
+  "edition": "2026년 11월 20일 금요일 · 오전 10시 브리핑",
+  "coverage": "수집 범위 11/19 09:50 ~ 11/20 09:50 (KST) · 삼프로TV·한국경제TV는 채널 RSS 업로드 시각 기준",
+  "generated_at": "2026-11-20T12:40:00+09:00",
+  "headline": "앤트로픽 상장 첫날 차익실현 매물이 AI주를 덮쳤습니다. 나스닥 -2.25%, 코스피는 5,000선이 무너진 4,928.51로 출발했습니다. 서울 아파트값은 93주 연속 상승 기록을 이어갔지만 강남3구에 이어 용산·동작도 하락 전환하며 조정이 확산하고 있습니다.",
+  "notes": [
+    "이 화면은 저장소의 data/briefings/2026-11-20.json 을 읽어 렌더링합니다. 같은 형식으로 JSON을 커밋·푸시하면 Vercel 자동 배포로 바로 반영됩니다.",
+    "링크드인 게시물은 로그인 벽이 있어 스크랩 시 본문 자동 추출이 실패할 수 있습니다. 이 경우에도 제목·출처·링크를 담은 기본 노트가 Obsidian에 저장됩니다.",
+    "링크드인 게시 시점은 피드 표시값(20m~1d, 수집 시각 11/20 11:45 KST 기준 상대 표시)이며, Juseob Sim 글은 그룹 글이라 그룹 가입이 필요할 수 있습니다.",
+    "삼프로TV·한국경제TV 카드는 유튜브 채널 RSS에서 확인한 영상이며, 요약은 영상 제목이 밝힌 주제 범위 안에서만 정리했습니다."
+  ],
+  "sections": [
+    {
+      "key": "ai_stock",
+      "no": 1,
+      "title": "AI·주식",
+      "icon": "📈",
+      "color": "#6366f1",
+      "lead": "앤트로픽 IPO 첫날 17% 상승에도 AI주는 차익실현 매물에 밀렸습니다. 나스닥 -2.25%, 코스피는 4.08% 급락 출발하며 5,000선이 깨졌습니다.",
+      "items": [
+        {
+          "title": "앤트로픽 상장 직후 AI株 투매…나스닥 2.25%↓",
+          "url": "https://www.hankyung.com/article/2026112088366",
+          "source_name": "한국경제",
+          "published_at": "2026-11-20T07:06",
+          "summary": "다우 -2.19%(4만9,097.06)로 5만선을 이탈했고 S&P500 -2.02%, 나스닥 -2.25%(2만3,879.20)로 마감했습니다. 엔비디아 -3.30%, AMD -7.72%, 마이크론·브로드컴 2%대↓, 필라델피아반도체 2%대↓였고 VIX는 장중 29에 근접(3월 이후 최고)했습니다.",
+          "tags": ["미국증시", "반도체"],
+          "highlight": true
+        },
+        {
+          "title": "앤트로픽, 상장 첫날 97.17달러로 마감",
+          "url": "https://www.hankyung.com/article/2026112087777",
+          "source_name": "한국경제",
+          "published_at": "2026-11-20T06:09",
+          "summary": "공모가 83달러로 출발한 앤트로픽은 시초가 111.50달러(+34%)까지 치솟았다가 종가 97.17달러(+17%)로 마감했습니다.",
+          "tags": ["IPO", "앤트로픽"],
+          "highlight": true
+        },
+        {
+          "title": "앤트로픽, 143조 조달…스페이스X 넘어 역대 최대 IPO",
+          "url": "https://www.sedaily.com/article/20116797",
+          "source_name": "서울경제",
+          "published_at": "2026-11-20T09:41",
+          "summary": "앤트로픽이 143조원을 조달하며 스페이스X를 넘어 글로벌 IPO 사상 최대 기록을 세웠습니다. 상장 직후 완전희석 시총 2조달러, 한때 글로벌 시총 6위에 올랐다는 보도(한국경제TV 기준)도 나왔습니다.",
+          "tags": ["IPO", "앤트로픽"],
+          "note": "시총·순위는 한국경제TV 보도 기준"
+        },
+        {
+          "title": "[코스피] 209.38포인트(4.08%) 내린 4,928.51 출발…코스닥 660.98(-3.48%)",
+          "url": "https://www.sedaily.com/article/20116777",
+          "source_name": "서울경제",
+          "published_at": "2026-11-20T09:10",
+          "summary": "코스피가 209.38포인트(4.08%) 급락한 4,928.51로 개장하며 5,000선이 무너졌고, 코스닥도 3.48% 내린 660.98로 출발했습니다. 반도체가 급락한 반면 화장품·여행주는 강세를 보였습니다.",
+          "tags": ["국내증시"],
+          "highlight": true
+        },
+        {
+          "title": "\"앤트로픽 투자했는데 왜 이래\"…8% 폭락한 SKT의 미스터리",
+          "url": "https://www.hankyung.com/article/2026112091886",
+          "source_name": "한국경제",
+          "published_at": "2026-11-20T09:18",
+          "summary": "SK텔레콤이 9시 8분 7만3,700원(-8.10%)까지 밀렸습니다. 앤트로픽 초기 투자 지분에 대한 기대가 IPO 이후 차익실현으로 돌아섰고, 지분 매각 시점과 재원은 아직 정해지지 않았습니다(박종석 CFO).",
+          "tags": ["국내증시", "통신"],
+          "highlight": true
+        },
+        {
+          "title": "하루 늦게 덮친 엔비디아 후폭풍…韓 네오클라우드 '급락'",
+          "url": "https://www.hankyung.com/article/2026111979176",
+          "source_name": "한국경제",
+          "published_at": "2026-11-20T06:30",
+          "summary": "엔비디아가 네오클라우드를 “규율 있고 선별적”으로 지원하겠다고 밝힌 뒤 NHN -11.10%, 삼성에스디에스 -7.14%, KT -4.44%, 엘리스 -6.39%(공모가 대비 -41.8%)로 급락했습니다. NHN 클라우드 가치는 1.2조→1조, 삼성SDS AI데이터센터 가치는 3.2조→2.1조로 하향됐습니다.",
+          "tags": ["국내증시", "AI 인프라"]
+        },
+        {
+          "title": "JP모건 \"AI 투자 '붐' 정점은 올해…내년부터 증가세 둔화 전망\"",
+          "url": "https://news.einfomax.co.kr/news/articleView.html?idxno=4445693",
+          "source_name": "연합인포맥스",
+          "published_at": "2026-11-20T09:46",
+          "summary": "JP모건 페롤리 수석이코노미스트는 “총수요 기준 AI 정점은 올해”라고 진단했습니다. 아폴로의 슬뢰크는 올해 미국 GDP 성장의 약 65%가 AI 지출에서 나왔다고 추정했습니다.",
+          "tags": ["AI 투자", "거시"]
+        },
+        {
+          "title": "\"삼성전자·TSMC, 中에 일부 칩 출하 중단…美 수출통제\"",
+          "url": "https://news.einfomax.co.kr/news/articleView.html?idxno=4445653",
+          "source_name": "연합인포맥스",
+          "published_at": "2026-11-20T08:08",
+          "summary": "미국 수출통제 강화로 삼성전자와 TSMC가 중국 고객사에 대한 일부 칩 출하를 중단한 것으로 전해졌습니다.",
+          "tags": ["반도체", "수출통제"]
+        },
+        {
+          "title": "마이크론 CTO \"메모리 반도체 공급 제약 2027년에 더 심화\"",
+          "url": "https://news.einfomax.co.kr/news/articleView.html?idxno=4445660",
+          "source_name": "연합인포맥스",
+          "published_at": "2026-11-20T08:22",
+          "summary": "마이크론 CTO가 메모리 반도체 공급 제약이 2027년에는 더 심해질 것으로 내다봤습니다.",
+          "tags": ["반도체", "메모리"]
+        },
+        {
+          "title": "삼성전자 '전영현·노태문 투톱' 유지…반도체 메모리 황상준·모바일경험 최원준 등 사장 3명 승진",
+          "url": "https://www.hankyung.com/article/2026112091377",
+          "source_name": "한국경제",
+          "published_at": "2026-11-20T09:04",
+          "summary": "삼성전자가 전영현·노태문 투톱 체제를 유지하는 정기 인사를 단행했습니다. 반도체(메모리) 황상준, 모바일경험 최원준 등 사장 3명이 승진했습니다.",
+          "tags": ["삼성전자", "인사"]
+        },
+        {
+          "title": "\"미국인들, 삼전닉스 왜 팔죠?\"…외국인 두 달간 국내 주식 45조 순매도",
+          "url": "https://www.mk.co.kr/news/stock/12214312",
+          "source_name": "매일경제",
+          "published_at": "2026-11-20T09:10",
+          "summary": "외국인이 두 달 연속 국내 주식을 순매도하며 누적 순매도 규모가 45조원에 달했습니다. 10월 한 달에만 26조원을 더 팔았습니다.",
+          "tags": ["수급", "국내증시"]
+        },
+        {
+          "title": "KB증권 \"반도체 비관 정점…삼전닉스 내년 D램 판가 40%↑\"",
+          "url": "https://www.sedaily.com/article/20116765",
+          "source_name": "서울경제",
+          "published_at": "2026-11-20T08:49",
+          "summary": "KB증권은 반도체에 대한 비관론이 정점을 지났다며 삼성전자·SK하이닉스의 내년 D램 판가가 40% 오를 것으로 전망했습니다.",
+          "tags": ["반도체", "전망"]
+        },
+        {
+          "title": "삼성증권 포럼서 자문사 대표 3명 중 2명 \"내년 코스피 7000 이상\"",
+          "url": "https://www.sedaily.com/article/20116801",
+          "source_name": "서울경제",
+          "published_at": "2026-11-20T09:44",
+          "summary": "삼성증권 포럼에 참석한 자문사 대표 3명 중 2명이 내년 코스피가 7,000 이상으로 오를 것으로 내다봤습니다.",
+          "tags": ["국내증시", "전망"]
+        },
+        {
+          "title": "월러 연준 이사 매파 발언…12월 빅스텝 확률 10%로 상승",
+          "url": "https://www.sedaily.com/article/20116796",
+          "source_name": "서울경제",
+          "published_at": "2026-11-20T09:40",
+          "summary": "크리스토퍼 월러 연준 이사의 매파적 발언 이후 12월 빅스텝 확률이 10%로 올랐습니다.",
+          "tags": ["금리", "연준"]
+        },
+        {
+          "title": "말라가는 증시 실탄…예탁금, 84조 원대로 연중 최저치 경신",
+          "url": "https://www.sedaily.com/article/20116519",
+          "source_name": "서울경제",
+          "published_at": "2026-11-19T16:03",
+          "summary": "투자 대기자금인 예탁금이 84조원대로 줄며 연중 최저치를 다시 썼습니다. 한국경제TV는 2.4조원이 빠져나갔다고 전했습니다.",
+          "tags": ["수급"]
+        },
+        {
+          "title": "LGD, 3조 OLED 투자 접고 사업부 통합…수익성 중심 재편",
+          "url": "https://news.einfomax.co.kr/news/articleView.html?idxno=4445666",
+          "source_name": "연합인포맥스",
+          "published_at": "2026-11-20T08:38",
+          "summary": "LG디스플레이가 3조원 규모 OLED 투자를 접고 사업부를 통합하는 등 수익성 중심으로 재편합니다.",
+          "tags": ["디스플레이", "구조조정"]
+        },
+        {
+          "title": "\"美 데이터센터 건설 지연…'유휴 전력설비·BESS' 대안 부상\"",
+          "url": "https://news.einfomax.co.kr/news/articleView.html?idxno=4445649",
+          "source_name": "연합인포맥스",
+          "published_at": "2026-11-20T07:56",
+          "summary": "미국 데이터센터 건설이 늦어지면서 유휴 전력설비와 BESS(배터리 에너지저장장치)가 대안으로 떠올랐습니다.",
+          "tags": ["전력", "AI 인프라"]
+        },
+        {
+          "title": "\"엔비디아, 핵심 엔지니어 이탈 막는게 최우선 과제\"",
+          "url": "https://news.einfomax.co.kr/news/articleView.html?idxno=4445650",
+          "source_name": "연합인포맥스",
+          "published_at": "2026-11-20T07:58",
+          "summary": "엔비디아가 핵심 엔지니어의 이탈을 막는 것을 최우선 과제로 삼고 있다고 전해졌습니다.",
+          "tags": ["엔비디아", "인력"]
+        },
+        {
+          "title": "일진전기, 싱가포르서 1,125억 초고압 케이블 수주",
+          "url": "https://www.hankyung.com/article/2026111982701",
+          "source_name": "한국경제",
+          "published_at": "2026-11-19T18:05",
+          "summary": "일진전기가 싱가포르에서 1,125억원 규모 초고압 케이블을 수주했습니다.",
+          "tags": ["전력 인프라", "수주"]
+        },
+        {
+          "title": "한국 수출 사상 첫 1조 달러 돌파",
+          "url": "https://www.sedaily.com/article/20116443",
+          "source_name": "서울경제",
+          "published_at": "2026-11-19T14:09",
+          "summary": "한국 수출이 사상 처음으로 1조 달러를 돌파했습니다. 반도체가 견인했고 내년에도 이어질 것으로 전망됩니다.",
+          "tags": ["수출", "거시"]
+        }
+      ]
+    },
+    {
+      "key": "realestate",
+      "no": 2,
+      "title": "국내 부동산",
+      "icon": "🏠",
+      "color": "#10b981",
+      "lead": "서울 아파트값이 93주 연속 상승으로 최장 기록을 이어갔지만 상승폭은 91주 만의 최소였고, 강남3구에 이어 용산·동작도 하락 전환했습니다. 전셋값은 매매와 반대로 오름세입니다.",
+      "items": [
+        {
+          "title": "서울 아파트값 93주째 올라 최장 기록 경신…경기 남부 상승세 이어져",
+          "url": "https://www.hankyung.com/article/2026111971346",
+          "source_name": "한국경제",
+          "published_at": "2026-11-19T14:00",
+          "summary": "한국부동산원 11월 셋째주(16일 기준) 서울 아파트값은 0.03% 오르며 93주 연속 상승을 이어갔습니다. 다만 상승폭은 전주 0.07%의 절반으로 91주 만에 가장 작았고, 경기 0.21%↑(수원 권선 0.62%·안양 동안 0.61%·용인 기흥 0.55%)로 남부 상승세가 두드러졌습니다.",
+          "tags": ["아파트값", "부동산원"],
+          "highlight": true
+        },
+        {
+          "title": "강남3구 이어 용산·동작도 하락…서울 아파트값 조정 확산 [집슐랭]",
+          "url": "https://www.sedaily.com/article/20116659",
+          "source_name": "서울경제",
+          "published_at": "2026-11-20T06:20",
+          "summary": "강남(-0.30%)·서초(-0.31%)·송파(-0.42%)에 이어 용산(-0.02%)·동작(-0.01%)도 하락 전환했습니다. 성동·강동은 2주 연속 내렸고 성북은 0.34%로 가장 많이 올랐습니다.",
+          "tags": ["아파트값", "조정"],
+          "highlight": true
+        },
+        {
+          "title": "매매 주춤해도 전셋값은 달린다…서울 전셋값 상승률 전년대비 3배",
+          "url": "https://www.mt.co.kr/estate/2026/11/19/2026111914275934490",
+          "source_name": "머니투데이",
+          "published_at": "2026-11-19T14:27",
+          "summary": "매매 거래가 주춤한 사이 전셋값 상승세가 이어지며 서울 전셋값 상승률이 전년 대비 3배 수준으로 커졌습니다.",
+          "tags": ["전세"]
+        },
+        {
+          "title": "서울 전역 전세가 상승…초소형 한달새 2.23% 뛰어",
+          "url": "https://www.sedaily.com/article/20116331",
+          "source_name": "서울경제",
+          "published_at": "2026-11-19T16:00",
+          "summary": "서울 전역에서 전세가가 오르는 가운데 초소형 주택 전셋값이 한 달 새 2.23% 뛰었습니다. 전세는 서울 0.14%·경기 0.16%·인천 0.06% 상승했고 강남3구 전세도 올랐습니다.",
+          "tags": ["전세"]
+        },
+        {
+          "title": "국토부, 전국 9곳 '철도 지하화' 통합개발 본격 추진",
+          "url": "https://www.sedaily.com/article/20116798",
+          "source_name": "서울경제",
+          "published_at": "2026-11-20T09:42",
+          "summary": "국토부가 전국 9곳에서 철도 지하화와 통합개발을 본격 추진합니다. 서울 경부·경원선 67.6㎞를 지하화하고 지상에 초고밀 복합도시를 조성하는 사업으로, 규모는 53조원에 이르며 재원 확보가 숙제로 남았습니다.",
+          "tags": ["정책", "철도 지하화"],
+          "highlight": true
+        },
+        {
+          "title": "서울 경부·경원선 지하화…역사 39곳 '주거복합 개발'",
+          "url": "https://www.hankyung.com/article/2026111981001",
+          "source_name": "한국경제",
+          "published_at": "2026-11-19T18:15",
+          "summary": "서울 경부·경원선 지하화로 생기는 역사 39곳이 주거복합 단지로 개발될 예정입니다.",
+          "tags": ["정책", "개발"]
+        },
+        {
+          "title": "반포현대 재초환 연내 부과에 술렁…\"급매 쌓이고 재건축 늦어지나\"",
+          "url": "https://www.mt.co.kr/estate/2026/11/19/2026111914462786246",
+          "source_name": "머니투데이",
+          "published_at": "2026-11-19T14:46",
+          "summary": "반포현대에 재건축초과이익환수금이 연내 부과될 것으로 알려지며 급매물이 쌓이고 재건축 일정이 늦어질 수 있다는 우려가 나옵니다. 한국경제는 부과 예상액을 179억원으로 전했습니다.",
+          "tags": ["재건축", "재초환"]
+        },
+        {
+          "title": "국토부 \"재초환 부담금 제척기간 5년\"…서초구 해석 수용",
+          "url": "https://www.sedaily.com/article/20116494",
+          "source_name": "서울경제",
+          "published_at": "2026-11-19T15:33",
+          "summary": "국토부가 재초환 부담금 제척기간을 5년으로 본 서초구의 해석을 수용했습니다. 서초구는 제도 자체를 폐지해야 한다는 입장을 이어갔습니다.",
+          "tags": ["재초환", "정책"]
+        },
+        {
+          "title": "\"4인 가구 만점은 돼야\"…더 높아진 서울 신축 청약 문턱",
+          "url": "https://www.hankyung.com/article/2026112089756",
+          "source_name": "한국경제",
+          "published_at": "2026-11-20T09:22",
+          "summary": "서울 평균 청약가점은 2023년 56.17점 → 2024년 59.68점 → 지난해 65.81점, 올해 1~9월 63.3점으로 높아졌습니다. 서초구가 73.1점으로 가장 높았고 69점은 4인 가구 무주택·통장 15년 만점 수준입니다. 추첨제(투기과열지구 60㎡ 이하 60%)가 실질 기회로, 12월 '서초 롯데캐슬 아트팰리스'(146세대 일반분양) 등 추첨 물량이 공급됩니다.",
+          "tags": ["청약", "가점"],
+          "highlight": true
+        },
+        {
+          "title": "흑석 '국평' 30억인데 반포 '평당 1억' 안된다는 분상제",
+          "url": "https://www.sedaily.com/article/20116657",
+          "source_name": "서울경제",
+          "published_at": "2026-11-20T06:35",
+          "summary": "흑석 국민평형이 30억원인데 반포는 분양가상한제 때문에 평당 1억원을 넘기지 못한다는 시장 왜곡 논란이 이어지고 있습니다.",
+          "tags": ["분상제", "분양가"]
+        },
+        {
+          "title": "예금금리 오르자 주담대 금리도 '껑충'…변동형은 6% 뚫렸다",
+          "url": "https://www.mk.co.kr/news/economy/12213467",
+          "source_name": "매일경제",
+          "published_at": "2026-11-19T11:36",
+          "summary": "예금금리 상승이 주택담보대출 금리로 옮겨붙으며 변동형 주담대 금리가 6%를 넘어섰습니다.",
+          "tags": ["대출", "금리"]
+        },
+        {
+          "title": "[단독] 가계대출 보름만에 1조 쑥…연말 대출 막힐라",
+          "url": "https://www.mk.co.kr/news/economy/12213828",
+          "source_name": "매일경제",
+          "published_at": "2026-11-19T17:40",
+          "summary": "가계대출이 보름 만에 1조원 넘게 늘어 연말 대출 문턱이 더 높아질 수 있다는 관측입니다.",
+          "tags": ["대출", "가계부채"]
+        },
+        {
+          "title": "국토부·서울시, 멈췄던 '도심복합사업' 5개월 만에 재가동",
+          "url": "https://www.sedaily.com/article/20116287",
+          "source_name": "서울경제",
+          "published_at": "2026-11-19T10:07",
+          "summary": "국토부와 서울시가 멈췄던 도심복합사업을 5개월 만에 재가동합니다. 서울 도심복합 사업지를 8곳·1만9,000가구 규모로 늘린다는 계획도 함께 나왔습니다.",
+          "tags": ["공급", "도심복합"],
+          "highlight": true
+        },
+        {
+          "title": "\"AI 붕괴 오면 고통스런 경기침체 이어질 것…한국 집값도 위험\"",
+          "url": "https://www.mk.co.kr/news/economy/12213727",
+          "source_name": "매일경제",
+          "published_at": "2026-11-20T05:00",
+          "summary": "AI 버블이 꺼지면 고통스러운 경기침체가 이어지고 한국 집값도 위험에 노출될 수 있다는 인터뷰입니다.",
+          "tags": ["거시", "AI·부동산"]
+        },
+        {
+          "title": "IPARK현산 '아이파크 순천 센트럴' 683가구 12월 분양",
+          "url": "https://www.hankyung.com/article/202611209027i",
+          "source_name": "한국경제",
+          "published_at": "2026-11-20T08:41",
+          "summary": "IPARK현산이 순천에서 683가구 규모 '아이파크 순천 센트럴'을 12월 분양합니다.",
+          "tags": ["분양"]
+        }
+      ]
+    },
+    {
+      "key": "broadcast",
+      "no": 3,
+      "title": "삼프로TV·경제방송",
+      "icon": "🎬",
+      "color": "#f59e0b",
+      "lead": "지난 24시간 삼프로TV 업로드 15편 전수와 한국경제TV 주요 영상 6편입니다. 개장 전 앤트로픽 상장과 차익실현, 외국인 수급, 코스피 바닥론이 중심 주제였습니다.",
+      "items": [
+        {
+          "title": "앤트로픽 상장 첫날 17% 상승…아마존·구글·SKT·LG 대박 / 트럼프 핵 군축, 중·러 냉담 | 권순우 [뉴스3]",
+          "url": "https://www.youtube.com/watch?v=qu5RoRs0beQ",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-20T08:25",
+          "summary": "앤트로픽 상장 첫날 17% 상승과 아마존·구글·SKT·LG의 수혜, 트럼프의 핵 군축 발언에 대한 중·러의 냉담한 반응을 다룹니다.",
+          "tags": ["뉴스3", "앤트로픽"],
+          "highlight": true
+        },
+        {
+          "title": "\"연말랠리 여전히 기대한다\"…외국인 매도 끝나면 강한 반등 올까? | 이건규 르네상스자산운용 [글로벌 인터뷰]",
+          "url": "https://www.youtube.com/watch?v=UlNBpokQfVk",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-20T07:44",
+          "summary": "이건규 르네상스자산운용 대표와 연말랠리 기대, 외국인 매도 종료 이후 반등 가능성을 짚는 글로벌 인터뷰입니다.",
+          "tags": ["글로벌 인터뷰", "수급"],
+          "highlight": true
+        },
+        {
+          "title": "앤트로픽 상장 첫 날 공모가 상회…시장은 대거 차익 실현 | 박명석 [월가 뉴스레터]",
+          "url": "https://www.youtube.com/watch?v=X1D0cQjwrkU",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-20T07:03",
+          "summary": "앤트로픽이 공모가를 웃도는 가격에 상장한 첫날, 시장에서 대거 차익실현이 나온 흐름을 정리합니다.",
+          "tags": ["월가 뉴스레터", "IPO"]
+        },
+        {
+          "title": "[11월 20일 개장시황] 빈센트·정프로·이재규·김문정·편다송·김창배 [더블 밸류업]",
+          "url": "https://www.youtube.com/watch?v=8ZS2VyTY9lk",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-20T05:34",
+          "summary": "6명의 전문가가 함께하는 11월 20일 개장시황입니다.",
+          "tags": ["개장시황", "더블 밸류업"]
+        },
+        {
+          "title": "극도로 쏠렸던 공매도의 끝자락, 악재 버텨낸 증시가 다음 주 상방을 노리는 이유 [주린이 구조대]",
+          "url": "https://www.youtube.com/watch?v=vC7v55f8sdo",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T21:00",
+          "summary": "쏠렸던 공매도가 마무리 국면에 접어들고 악재를 버틴 증시가 다음 주 상방을 노리는 이유를 짚습니다.",
+          "tags": ["주린이 구조대", "공매도"]
+        },
+        {
+          "title": "코스피 바닥 단정은 금물…앤트로픽 상장이 반등의 계기가 될 수 있을까? [주린이 구조대]",
+          "url": "https://www.youtube.com/watch?v=c7f9jtyq9yw",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T20:00",
+          "summary": "코스피 바닥을 단정하기는 이르다는 관점에서, 앤트로픽 상장이 반등 계기가 될 수 있는지 토론합니다.",
+          "tags": ["주린이 구조대", "코스피"]
+        },
+        {
+          "title": "[26.11.19 오후 방송 전체보기] 앤트로픽 IPO 공모가도 결정...오늘밤 나스닥 파티에 국내증시도 덩달아 웃을까",
+          "url": "https://www.youtube.com/watch?v=FmOvuiAqZMU",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T19:09",
+          "summary": "11월 19일 오후 방송 전체보기. 앤트로픽 IPO 공모가 확정과 나스닥 흐름이 국내증시에 미칠 영향을 다룹니다.",
+          "tags": ["방송 전체보기", "IPO"]
+        },
+        {
+          "title": "앤트로픽 상장 성공이 반등의 끝은 아니다…AI 상승 뒤 금리·신용위험 경계해야 | 장우진 [여의도 인사이트]",
+          "url": "https://www.youtube.com/watch?v=bsmFdEtKWqM",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T18:13",
+          "summary": "앤트로픽 상장 성공을 반등의 끝으로 보면 안 되고, AI 상승 뒤에 오는 금리·신용위험을 경계해야 한다는 분석입니다.",
+          "tags": ["여의도 인사이트", "리스크"]
+        },
+        {
+          "title": "목표주가 낮췄는데 왜 더 사라 그래요? | 김록호 하나증권 [더블 업]",
+          "url": "https://www.youtube.com/watch?v=Y41Mgq17ZPU",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T17:30",
+          "summary": "목표주가를 낮췄는데도 매수세가 붙는 종목의 이유를 김록호 하나증권 애널리스트가 설명합니다.",
+          "tags": ["더블 업", "종목분석"]
+        },
+        {
+          "title": "[11월 19일 마감시황] 5,000선 깨고 장중 최고가 마감…코스피 바닥 인식이 달라질까 [클로징벨 라이브]",
+          "url": "https://www.youtube.com/watch?v=22mEZYyDpZA",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T16:54",
+          "summary": "5,000선이 깨진 뒤 장중 최고가로 마감한 11월 19일 시장과 코스피 바닥 인식 변화를 짚는 마감시황입니다.",
+          "tags": ["마감시황", "클로징벨"],
+          "highlight": true
+        },
+        {
+          "title": "\"절대 못 삽니다\" 버티는 게 전략인 이유 | 하창완 대표 [더블 체크]",
+          "url": "https://www.youtube.com/watch?v=YUskkH1U74k",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T16:01",
+          "summary": "지금은 사지 않고 버티는 것이 전략인 이유를 하창완 대표가 설명합니다.",
+          "tags": ["더블 체크", "전략"]
+        },
+        {
+          "title": "AI 반도체보다 먼저 달린다! 호실적·수주 대박 터진 에너지 인프라 찐 수혜주 | 김태성 [2시 마켓워치]",
+          "url": "https://www.youtube.com/watch?v=G_CPMSwOIP0",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T15:38",
+          "summary": "AI 반도체보다 먼저 움직이는 에너지 인프라 수혜주를 호실적·수주 실적과 함께 짚습니다.",
+          "tags": ["2시 마켓워치", "에너지 인프라"]
+        },
+        {
+          "title": "외국인이 한국 주식을 외면하는 이유…반전의 열쇠는 미국 채권시장 | 민재기 KB증권 [2시 마켓워치]",
+          "url": "https://www.youtube.com/watch?v=d9rmKdDS43w",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T15:13",
+          "summary": "외국인이 한국 주식을 외면하는 배경과 반전의 열쇠로 지목된 미국 채권시장을 민재기 KB증권 연구원이 설명합니다.",
+          "tags": ["2시 마켓워치", "수급"]
+        },
+        {
+          "title": "기관 시장 열린다, 이더리움·솔라나 외 주목할 블록체인은? [크립토 PLUS]",
+          "url": "https://www.youtube.com/watch?v=Y56dlWVPpPg",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T12:45",
+          "summary": "기관 자금 유입이 본격화하는 가운데 이더리움·솔라나 외에 주목할 블록체인을 짚습니다.",
+          "tags": ["크립토 PLUS", "블록체인"]
+        },
+        {
+          "title": "비트코인 200주선 이탈…수급 악화에 금리 부담까지 [크립토 PLUS]",
+          "url": "https://www.youtube.com/watch?v=axG8buIPalY",
+          "source_name": "삼프로TV",
+          "published_at": "2026-11-19T12:30",
+          "summary": "비트코인이 200주선을 이탈한 가운데 수급 악화와 금리 부담이 겹친 상황을 다룹니다.",
+          "tags": ["크립토 PLUS", "비트코인"]
+        },
+        {
+          "title": "\"흔들리는 장, 확률 높은 자리만 갑니다\" 장영한",
+          "url": "https://www.youtube.com/watch?v=lXjl2cJ590s",
+          "source_name": "한국경제TV",
+          "published_at": "2026-11-20T09:00",
+          "summary": "변동성이 큰 장에서 확률 높은 자리만 대응한다는 장영한의 11월 20일 장 전략입니다.",
+          "tags": ["시황", "전략"]
+        },
+        {
+          "title": "\"11월 20일 글로벌 1분 시황\"",
+          "url": "https://www.youtube.com/watch?v=QMiJEpfTvIg",
+          "source_name": "한국경제TV",
+          "published_at": "2026-11-20T08:20",
+          "summary": "11월 20일 글로벌 시장을 1분으로 압축한 시황입니다.",
+          "tags": ["글로벌 시황"]
+        },
+        {
+          "title": "\"앤트로픽 17% 급등에도 월가는 울었다…AI 투자심리 회복 분수령은 '이것'\"",
+          "url": "https://www.youtube.com/watch?v=t6TlitD-_eA",
+          "source_name": "한국경제TV",
+          "published_at": "2026-11-20T07:59",
+          "summary": "앤트로픽이 17% 급등했는데도 월가 지수가 하락한 배경과 AI 투자심리 회복의 분수령을 짚습니다.",
+          "tags": ["AI 투자", "미국증시"],
+          "highlight": true
+        },
+        {
+          "title": "\"한중 FTA에 '이 섹터' 불기둥…한한령 완화 수혜 종목은?\"",
+          "url": "https://www.youtube.com/watch?v=naQBjdPu42w",
+          "source_name": "한국경제TV",
+          "published_at": "2026-11-20T07:58",
+          "summary": "한중 FTA와 한한령 완화 기대가 만든 수혜 섹터·종목을 짚습니다.",
+          "tags": ["한중 FTA", "수혜주"]
+        },
+        {
+          "title": "\"美 3대 지수 하락 마감, 앤트로픽 97.17달러 마감｜뉴욕인사이트_김선형\"",
+          "url": "https://www.youtube.com/watch?v=pBpRhjuh1M4",
+          "source_name": "한국경제TV",
+          "published_at": "2026-11-20T07:22",
+          "summary": "미국 3대 지수가 하락 마감하고 앤트로픽이 97.17달러에 마감한 뉴욕 시장을 정리합니다.",
+          "tags": ["뉴욕인사이트", "미국증시"]
+        },
+        {
+          "title": "\"[🔴11/20 #당잠사] 앤트로픽 상장 첫날 변동성↑…시초가 대비 10%↓ | AMD 中 수출통제 위반 의혹\"",
+          "url": "https://www.youtube.com/watch?v=lzAxjPb1Wsk",
+          "source_name": "한국경제TV",
+          "published_at": "2026-11-20T06:27",
+          "summary": "앤트로픽 상장 첫날 변동성과 시초가 대비 10% 하락, AMD의 중국 수출통제 위반 의혹을 다룹니다.",
+          "tags": ["당잠사", "반도체"]
+        }
+      ]
+    },
+    {
+      "key": "linkedin",
+      "no": 4,
+      "title": "링크드인 AI 피드",
+      "icon": "💼",
+      "color": "#0ea5e9",
+      "lead": "오늘 피드에서 확인한 AI 관련 글 8건입니다. 모델 순위·에이전트 운영 노하우·AI 영상 B2B·한국 세일즈 AX까지, 현업 이야기가 중심이었습니다.",
+      "items": [
+        {
+          "title": "Darwin, 수학·과학 추론 오픈 모델 세계 1위 · 전체 2위",
+          "author": "Juseob Sim · AI startup community",
+          "url": "https://www.linkedin.com/feed/update/urn:li:groupPost:30900014-7529367880153628673/",
+          "source_name": "LinkedIn",
+          "posted_label": "20m",
+          "summary": "OpenAI GPT-6.1 다음, 구글 Gemini·xAI Grok·DeepSeek·Qwen보다 위라는 평가와 함께 19개 글로벌 모델 중 유일한 한국 모델이라고 소개했습니다. 모델 순위는 작성자 서술이며 별도 검증은 하지 않았습니다.",
+          "tags": ["오픈모델", "한국 AI"],
+          "note": "그룹 글 — 그룹 가입이 필요할 수 있습니다",
+          "highlight": true
+        },
+        {
+          "title": "사티아 나델라 \"만든 것에 정 붙이지 마세요\" — 모델은 교체 부품으로",
+          "author": "Josh Kim · JOSHUA&COMPANY 대표",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7529348252769378304/",
+          "source_name": "LinkedIn",
+          "posted_label": "1h",
+          "summary": "Pragmatic Engineer 대담 내용을 정리했습니다. ① 코드 생성이 싸진 지금 어려운 것은 검증이므로 실패 사례를 테스트로 남긴다 ② 비평은 다른 모델 계열에 맡긴다 ③ 맥락·기억·도구를 특정 모델에 묶지 않아야 모델을 바꿔도 자체 채점표 점수가 오르는지 시험할 수 있다. 실천 팁은 '이번 주 AI가 고친 버그에 고치기 전 코드에서 실패하는 테스트부터 작성'입니다.",
+          "tags": ["AI 에이전트", "엔지니어링"],
+          "highlight": true
+        },
+        {
+          "title": "지크(ZCRE) B2B 오픈 일주일 만에 총 10개 기업 온보딩",
+          "author": "심규현 · Letsur(letsur.ai) Founder & CEO",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7529327739674296321/",
+          "source_name": "LinkedIn",
+          "posted_label": "2h",
+          "summary": "AI 영상 생성 서비스 지크의 B2B 오픈 후 하루 2개씩 총 10개 기업을 온보딩했습니다. 힉스필드에서 옮겨온 고객 반응과 고객사 피드백 채널 운영(새벽 수정, 수시간 내 결과 리포트, 슬랙·팀즈 직접 대응)을 공유했습니다. 한국·일본에서 힉스필드를 넘고 싶다는 포부도 밝혔습니다.",
+          "tags": ["AI 영상", "B2B"]
+        },
+        {
+          "title": "19주차 클로드 교육 — '결과물'이 아니라 '역량'을 택한 이유",
+          "author": "한성국 · AI 에이전트 교육",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7529306289915506688/",
+          "source_name": "LinkedIn",
+          "posted_label": "4h",
+          "summary": "19주 커리큘럼 중 4주차를 진행 중이며, 8시간×3~4회 압축 교육과 달리 긴 호흡으로 문제 해결 역량을 키우는 데 집중한다고 밝혔습니다. \"AI는 원하는 건 뭐든 만들어주지만 내가 문제를 명확히 정의하지 않으면 해줄 수 있는 게 많지 않다\"며 깃허브 스타가 많은 스킬·플러그인도 문제 정의 없이는 의미가 없다고 정리했습니다. 유튜브 채널을 교육 채널로 전환하고 12월부터 자체 교육을 시작합니다.",
+          "tags": ["AI 교육", "클로드"]
+        },
+        {
+          "title": "40페이지 수기 장부를 30일 걸려 정리하던 교장, Claude로 몇 분 만에",
+          "author": "Mike Krieger · Anthropic Labs",
+          "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7529239596929372161/",
+          "source_name": "LinkedIn",
+          "posted_label": "8h",
+          "summary": "상파울루의 한 교장이 학생 성적을 40페이지 수기 장부로 관리하며 필요한 것을 파악하는 데 30일이 걸렸는데, 장부를 사진으로 찍어 Claude에 물으니 몇 분으로 줄었다는 사례입니다. 교사는 서류 대신 학생에게 시간을 쓸 자유를, 뒤처지는 아이는 한 달 늦게가 아니라 곧 발견되는 변화를 얻는다는 메시지입니다.",
+          "tags": ["Claude", "활용 사례"],
+          "highlight": true
+        },
+        {
+          "title": "Claude Code + 어사이드 브라우저 80일 사용기 — 세션 336개, 태스크 1,524개",
+          "author": "Josh Kim · JOSHUA&COMPANY 대표",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7529076237668106241/",
+          "source_name": "LinkedIn",
+          "posted_label": "19h",
+          "summary": "\"클로드 코드가 만들고, 어사이드가 내보낸다\"는 구조로 80일간 운영한 기록입니다. 매일 도는 루틴 12개로 메일 40통 브리핑·답장 초안, 세금계산서 발행부터 청구, 슬랙 DM 라우팅, 앱 심사 제출·정부지원 공고 감시, 인터뷰 영상의 뉴스레터·썸네일 변환을 처리했습니다. 로그아웃 상태에서 '완료' 허위 보고, 같은 답글 2회, 결제 계정 영구 정지 같은 실패도 그대로 공개했고, 원칙은 '처음부터 자동화를 설계하지 않고 되면 스킬·루틴으로 굳힌다'입니다.",
+          "tags": ["AI 에이전트", "자동화"],
+          "highlight": true
+        },
+        {
+          "title": "Hugging Face pybot을 Rust로 포팅한 'rsbot' — 응답 1,129ms → 144ms",
+          "author": "Hyun-Hwan Jeong · Baylor College of Medicine",
+          "url": "https://www.linkedin.com/feed/update/urn:li:share:7529055801664073728/",
+          "source_name": "LinkedIn",
+          "posted_label": "21h",
+          "summary": "모델 가중치가 아니라 실제 파이썬 코드로 증류한 Hugging Face의 pybot(60만 줄)을 Claude Code로 Rust로 옮겨 rsbot을 완성했습니다. 중앙 응답시간이 1,129ms → 144ms(약 7.8배)로 줄고 2만+ 대화 턴에서 응답이 완전히 동일했으며, 포팅에는 약 이틀이 걸렸습니다(구독 한도 도달). 인상적인 점은 속도가 아니라 에이전틱 AI가 구현을 원본과 대조·검증한 과정이며, AI가 유지 비용을 낮추면 '런타임 효율 ↔ 개발 생산성' 트레이드오프를 다시 열 수 있다는 통찰입니다.",
+          "tags": ["Rust", "에이전틱 AI"]
+        },
+        {
+          "title": "한국 세일즈의 AX가 더딘 이유 — data friction",
+          "author": "Michael Myung Hyun An · Toss Payments",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7528826900694159360/",
+          "source_name": "LinkedIn",
+          "posted_label": "1d",
+          "summary": "글로벌 영업 AI 도구는 이메일·슬랙·화상회의 녹화를 읽지만, 한국 세일즈는 ① 개인 카톡(CRM·AI로 가져올 공식 통로 없음) ② 명함 앱(AI가 읽을 MCP·API가 없어 엑셀로 내보내 다시 붙여넣기)에서 이뤄집니다. 현실의 AI 연동 도구는 아직 손으로 정리한 엑셀·스프레드시트라는 지적과 함께, 이 로컬 맥락을 해결하는 B2B 솔루션이 AI native 세일즈 환경을 만들 것이라는 관점입니다.",
+          "tags": ["AX", "세일즈"]
+        }
+      ]
+    }
+  ]
+}
