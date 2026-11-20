@@ -207,8 +207,11 @@ def _write_to_obsidian(title: str, url: str, source_name: str, content: str, sum
 
     try:
         if file_path.exists():
-            with open(file_path, "a", encoding="utf-8") as f:
-                f.write(entry)
+            # 새 항목은 헤더 바로 아래(맨 위)에 삽입 — 최신 스크랩이 위로 오도록
+            existing = file_path.read_text(encoding="utf-8")
+            m = re.search(r"(?m)^# .+$", existing)
+            insert_at = existing.index("\n", m.start()) + 1 if m else 0
+            file_path.write_text(existing[:insert_at] + entry + existing[insert_at:], encoding="utf-8")
         else:
             header = (
                 f"---\ndate: {today}\ntags: [AI, newsletter]\n---\n\n"
