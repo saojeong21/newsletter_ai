@@ -37,7 +37,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 SCRAP_QUEUE_TABLE = "scrap_queue"
 ARTICLES_TABLE = "ainewsletter_items"
-POLL_INTERVAL = 60  # seconds
+POLL_INTERVAL = 5  # seconds — 스크랩 후 저장 체감 지연을 줄이기 위해 단축 (로컬 단일 사용자 데몬)
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 FREE_MODELS = [
@@ -161,9 +161,10 @@ app = Flask(__name__)
 CORS(app, origins="*")  # 로컬 전용 데몬 — 모든 출처 허용
 
 # 2026-11-20: 소스별 저장 폴더 분리 (사용자 요청)
-# - Instinct 브리핑:        01-Daily/Instinct Briefing, 날짜 yy.mm.dd(Day) (예: 26.11.20(Fri))
-# - 피클 브리핑 (접두사 구분): 01-Daily/Pickle Briefing,  날짜 YYYY-MM-DD
-# - 그 외 AI 뉴스레터(RSS):   01-Daily/AI Newsletter,     날짜 YYYY-MM-DD
+# - Instinct 브리핑:        01-Daily/Instinct Briefing
+# - 피클 브리핑 (접두사 구분): 01-Daily/Pickle Briefing
+# - 그 외 AI 뉴스레터(RSS):   01-Daily/AI Newsletter
+# 날짜 형식은 세 폴더 공통 yy.mm.dd(Day) (예: 26.11.20(Fri))
 OBSIDIAN_BASE_DIR = Path.home() / "Documents" / "Obsidian" / "01-Daily"
 INSTINCT_BRIEFING_SOURCE = "Instinct 브리핑"
 PICKLE_BRIEFING_PREFIX = "피클 브리핑 · "
@@ -179,15 +180,13 @@ def _write_to_obsidian(title: str, url: str, source_name: str, content: str, sum
         from datetime import timezone, timedelta as _td
         ref = scrap_dt + _td(hours=9)
     if source_name == INSTINCT_BRIEFING_SOURCE:
-        # Instinct 브리핑 노트 규칙: yy.mm.dd(Day), 요일 영문 3글자, 괄호 앞 공백 없음
-        today = f"{ref.strftime('%y.%m.%d')}({_DAYS_EN[ref.weekday()]})"
         target_dir = OBSIDIAN_BASE_DIR / "Instinct Briefing"
     elif source_name.startswith(PICKLE_BRIEFING_PREFIX):
-        today = ref.strftime("%Y-%m-%d")
         target_dir = OBSIDIAN_BASE_DIR / "Pickle Briefing"
     else:
-        today = ref.strftime("%Y-%m-%d")
         target_dir = OBSIDIAN_BASE_DIR / "AI Newsletter"
+    # 노트 날짜 형식은 세 폴더 모두 yy.mm.dd(Day)로 통일 (요일 영문 3글자, 괄호 앞 공백 없음)
+    today = f"{ref.strftime('%y.%m.%d')}({_DAYS_EN[ref.weekday()]})"
     time_str = ref.strftime("%H:%M")
     file_path = target_dir / f"{today}.md"
 

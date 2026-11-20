@@ -1,98 +1,155 @@
 {% extends "base.html" %}
 
-{% block title %}Instinct 브리핑 — AI 뉴스레터{% endblock %}
+{% block title %}{% if date_label %}{{ date_label }} {% endif %}Instinct 브리핑 — AI 뉴스레터{% endblock %}
 
 {% block content %}
 
-<!-- ── 히어로 섹션 ── -->
-<section class="page-hero" aria-labelledby="heroTitle">
+<!-- ── 브리핑 히어로 ── -->
+<section class="page-hero briefing-hero" aria-labelledby="briefingTitle">
     <div class="hero-pill" aria-hidden="true">
         <span class="hero-pill-dot"></span>
         Instinct 데일리 브리핑
     </div>
-    <h1 class="hero-title" id="heroTitle">Instinct 브리핑</h1>
+
+    <h1 class="hero-title" id="briefingTitle">{% if date_label %}{{ date_label }} {% endif %}Instinct 브리핑</h1>
+
+    <p class="briefing-headline">매일 아침 Instinct이 골라 담은 맞춤 브리핑</p>
+
     {% if article_count > 0 %}
-    <div class="hero-stats" aria-label="적재 통계">
+    <div class="hero-stats" aria-label="브리핑 통계">
         <span class="stat-badge">
             <span class="stat-badge-icon" aria-hidden="true">📰</span>
             <span class="stat-badge-value">{{ article_count }}</span>
-            <span class="stat-badge-label">항목</span>
+            <span class="stat-badge-label">건</span>
+        </span>
+        <span class="stat-badge">
+            <span class="stat-badge-icon" aria-hidden="true">🗂️</span>
+            <span class="stat-badge-value">{{ section_count }}</span>
+            <span class="stat-badge-label">섹션</span>
         </span>
     </div>
     {% endif %}
 </section>
 
-{% if articles %}
+{% if sections %}
 
-<!-- ── 브리핑 카드 그리드 ── -->
-<section class="news-grid" id="newsGrid" aria-label="Instinct 브리핑 카드">
-    {% for article in articles %}
-    {% set src_color = 'linear-gradient(135deg,#8b5cf6,#a78bfa)' %}
-
-    <article
-        class="news-card"
-        data-url="{{ article.url }}"
-        data-source-name="{{ article.source_name }}"
-        data-original-title="{{ article.title }}"
-        data-scrapped="{{ 'true' if article.is_scrapped else 'false' }}"
-        aria-label="{{ article.source_name }} — {{ article.title }}"
+<!-- ── 섹션 필터 + 검색 ── -->
+<div class="search-filter-bar" role="group" aria-label="브리핑 섹션 필터 및 검색">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input
+        type="search"
+        class="search-input"
+        id="briefingSearch"
+        placeholder="브리핑 검색..."
+        aria-label="브리핑 제목 검색"
+        autocomplete="off"
     >
-        <div class="card-body">
-            <!-- 헤더: 소스 아이콘 + 소스명 + 시간 -->
-            <div class="card-header">
-                <div class="source-icon" style="background: {{ src_color }}" aria-hidden="true">In</div>
-                <div class="card-source-info">
-                    <span class="card-source-name">{{ article.source_name }}</span>
-                </div>
-                <time class="card-time" datetime="{{ (article.published_at or article.collected_at).strftime('%Y-%m-%dT%H:%M:%S') }}">
-                    {% if article.published_at %}
-                        {{ article.published_at.strftime('%m/%d %H:%M') }}
-                    {% else %}
-                        {{ article.collected_at.strftime('%m/%d %H:%M') }}
-                    {% endif %}
-                </time>
-            </div>
+    <div class="filter-sep" aria-hidden="true"></div>
+    <div class="filter-pills" role="group" aria-label="섹션 필터">
+        <button class="filter-pill active" data-section-filter="all" aria-pressed="true">전체</button>
+        {% for section in sections %}
+        <button class="filter-pill" data-section-filter="{{ section.key }}" aria-pressed="false">
+            {{ section.no }}. {{ section.title }} <span class="filter-count">{{ section.count }}</span>
+        </button>
+        {% endfor %}
+    </div>
+</div>
 
-            <!-- 항목 제목 -->
-            <h2 class="card-title">
-                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="card-title-link">
-                    {{ article.title }}
-                </a>
+<!-- ── 섹션별 카드 ── -->
+{% for section in sections %}
+<section
+    class="briefing-section"
+    data-section="{{ section.key }}"
+    style="--section-color: {{ section.color }}"
+    aria-labelledby="section-{{ section.key }}-{{ section.no }}"
+>
+    <header class="briefing-section-header">
+        <span class="briefing-section-no" aria-hidden="true">{{ section.no }}</span>
+        <div class="briefing-section-titles">
+            <h2 class="briefing-section-title" id="section-{{ section.key }}-{{ section.no }}">
+                <span aria-hidden="true">{{ section.icon }}</span> {{ section.title }}
             </h2>
-
-            <!-- 브리핑 요약 -->
-            <div class="card-summary">
-                {% if article.summary_ko %}
-                    <p class="summary-text">{{ article.summary_ko | replace('\n', '<br>') | safe }}</p>
-                {% elif article.description %}
-                    <p class="summary-text description-fallback">{{ article.description[:120] }}{% if article.description|length > 120 %}...{% endif %}</p>
-                {% endif %}
-            </div>
-
-            <!-- 카드 푸터: 태그 + 액션 -->
-            <div class="card-footer">
-                <div class="card-tags">
-                    <span class="tag-region instinct">Instinct</span>
-                </div>
-                <div class="card-actions">
-                    <button
-                        class="scrap-btn{% if article.is_scrapped %} scrap-done{% endif %}"
-                        aria-label="Obsidian에 스크랩"
-                        title="Obsidian에 스크랩"
-                        {% if article.is_scrapped %}disabled{% endif %}
-                    >
-                        <span class="scrap-icon" aria-hidden="true">{% if article.is_scrapped %}✅{% else %}🔖{% endif %}</span>
-                        <span class="scrap-label">{% if article.is_scrapped %}저장됨{% else %}스크랩{% endif %}</span>
-                    </button>
-                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
-                        원문 보기 →
-                    </a>
-                </div>
-            </div>
         </div>
-    </article>
-    {% endfor %}
+        <span class="briefing-section-count">{{ section.count }}건</span>
+    </header>
+
+    <div class="news-grid" aria-label="{{ section.title }} 카드">
+        {% for article in section.cards %}
+        <article
+            class="news-card briefing-card"
+            data-section="{{ section.key }}"
+            data-title="{{ article.title | lower }}"
+            data-url="{{ article.url }}"
+            data-source-name="{{ article.source_name }}"
+            data-original-title="{{ article.title }}"
+            data-scrapped="{{ 'true' if article.is_scrapped else 'false' }}"
+            aria-label="{{ section.title }} — {{ article.title }}"
+        >
+            <div class="card-body">
+                <!-- 헤더: 소스 아이콘 + 소스명 + 시간 -->
+                <div class="card-header">
+                    <div class="source-icon" style="background: linear-gradient(135deg,#8b5cf6,#a78bfa)" aria-hidden="true">In</div>
+                    <div class="card-source-info">
+                        <span class="card-source-name">{{ article.source_name }}</span>
+                    </div>
+                    <time class="card-time" datetime="{{ (article.published_at or article.collected_at).strftime('%Y-%m-%dT%H:%M:%S') }}">
+                        {% if article.published_at %}
+                            {{ article.published_at.strftime('%m/%d %H:%M') }}
+                        {% else %}
+                            {{ article.collected_at.strftime('%m/%d %H:%M') }}
+                        {% endif %}
+                    </time>
+                </div>
+
+                <!-- 항목 제목 -->
+                <h3 class="card-title">
+                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="card-title-link">
+                        {{ article.title }}
+                    </a>
+                </h3>
+
+                <!-- 브리핑 요약 -->
+                <div class="card-summary">
+                    {% if article.summary_ko %}
+                        <p class="summary-text">{{ article.summary_ko | replace('\n', '<br>') | safe }}</p>
+                    {% elif article.description %}
+                        <p class="summary-text description-fallback">{{ article.description[:120] }}{% if article.description|length > 120 %}...{% endif %}</p>
+                    {% endif %}
+                </div>
+
+                <!-- 카드 푸터: 태그 + 액션 -->
+                <div class="card-footer">
+                    <div class="card-tags">
+                        <span class="tag-region instinct">Instinct</span>
+                    </div>
+                    <div class="card-actions">
+                        <button
+                            class="scrap-btn{% if article.is_scrapped %} scrap-done{% endif %}"
+                            aria-label="Obsidian에 스크랩"
+                            title="Obsidian에 스크랩"
+                            {% if article.is_scrapped %}disabled{% endif %}
+                        >
+                            <span class="scrap-icon" aria-hidden="true">{% if article.is_scrapped %}✅{% else %}🔖{% endif %}</span>
+                            <span class="scrap-label">{% if article.is_scrapped %}저장됨{% else %}스크랩{% endif %}</span>
+                        </button>
+                        <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
+                            원문 보기 →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
 </section>
+{% endfor %}
+
+<!-- 검색 결과 없음 -->
+<div id="noSearchResults" class="empty-state" style="display:none;" aria-live="polite">
+    <div class="empty-icon" aria-hidden="true">🔍</div>
+    <h2 class="empty-title">검색 결과가 없습니다</h2>
+    <p class="empty-desc">다른 검색어나 섹션을 선택해 보세요.</p>
+</div>
 
 {% else %}
 
@@ -109,6 +166,57 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    /* ──────────────────────────────────────────
+       섹션 필터 + 검색 (피클 브리핑과 동일 동작)
+    ────────────────────────────────────────── */
+    (function() {
+        var pills       = document.querySelectorAll('[data-section-filter]');
+        var searchInput = document.getElementById('briefingSearch');
+        var sections    = document.querySelectorAll('.briefing-section');
+        var noResults   = document.getElementById('noSearchResults');
+        if (!pills.length) return;
+
+        var currentSection = 'all';
+        var currentSearch  = '';
+
+        function applyFilter() {
+            var anyVisible = false;
+            sections.forEach(function(sec) {
+                var sectionMatch = (currentSection === 'all') || (sec.getAttribute('data-section') === currentSection);
+                var secHasVisibleCard = false;
+                sec.querySelectorAll('.news-card').forEach(function(card) {
+                    var title = card.getAttribute('data-title') || '';
+                    var searchOk = currentSearch === '' || title.indexOf(currentSearch) !== -1;
+                    var show = sectionMatch && searchOk;
+                    card.style.display = show ? '' : 'none';
+                    if (show) secHasVisibleCard = true;
+                });
+                sec.style.display = (sectionMatch && secHasVisibleCard) ? '' : 'none';
+                if (sectionMatch && secHasVisibleCard) anyVisible = true;
+            });
+            if (noResults) noResults.style.display = anyVisible ? 'none' : '';
+        }
+
+        pills.forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                pills.forEach(function(p) { p.classList.remove('active'); p.setAttribute('aria-pressed', 'false'); });
+                pill.classList.add('active');
+                pill.setAttribute('aria-pressed', 'true');
+                currentSection = pill.getAttribute('data-section-filter');
+                applyFilter();
+            });
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                currentSearch = searchInput.value.trim().toLowerCase();
+                applyFilter();
+            });
+        }
+    })();
+</script>
+
 <script>
     /* ──────────────────────────────────────────
        스크랩 버튼 (Obsidian 큐) — 홈과 동일 동작
