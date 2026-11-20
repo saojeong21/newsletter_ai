@@ -141,6 +141,20 @@ async def news_archive(
     )
 
 
+@app.get("/instinct-briefing", response_class=HTMLResponse, summary="Instinct 브리핑")
+async def instinct_briefing(request: Request):
+    """POST /api/briefing으로 적재된 Instinct 브리핑 항목을 최신순 카드로 보여준다."""
+    articles = supabase_db.get_briefing_items()
+    return templates.TemplateResponse(
+        "instinct_briefing.html",
+        {
+            "request": request,
+            "articles": articles,
+            "article_count": len(articles),
+        },
+    )
+
+
 @app.get("/briefing", response_class=HTMLResponse, summary="모닝 브리핑 (AI·주식 / 부동산 / 경제방송 / 링크드인)")
 async def morning_briefing(
     request: Request,

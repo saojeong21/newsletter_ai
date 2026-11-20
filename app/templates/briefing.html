@@ -359,7 +359,7 @@
             fetch('/api/scrap', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: title, url: url, source_name: sourceName })
+                body: JSON.stringify({ title: title, url: url, source_name: '피클 브리핑 · ' + sourceName })
             })
             .then(function(res) {
                 return res.json().then(function(data) { return { ok: res.ok, data: data }; });

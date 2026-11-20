@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Instinct 브리핑 — AI 뉴스레터{% endblock %}
+
+{% block content %}
+
+<!-- ── 히어로 섹션 ── -->
+<section class="page-hero" aria-labelledby="heroTitle">
+    <div class="hero-pill" aria-hidden="true">
+        <span class="hero-pill-dot"></span>
+        Instinct 데일리 브리핑
+    </div>
+    <h1 class="hero-title" id="heroTitle">Instinct 브리핑</h1>
+    {% if article_count > 0 %}
+    <div class="hero-stats" aria-label="적재 통계">
+        <span class="stat-badge">
+            <span class="stat-badge-icon" aria-hidden="true">📰</span>
+            <span class="stat-badge-value">{{ article_count }}</span>
+            <span class="stat-badge-label">항목</span>
+        </span>
+    </div>
+    {% endif %}
+</section>
+
+{% if articles %}
+
+<!-- ── 브리핑 카드 그리드 ── -->
+<section class="news-grid" id="newsGrid" aria-label="Instinct 브리핑 카드">
+    {% for article in articles %}
+    {% set src_color = 'linear-gradient(135deg,#8b5cf6,#a78bfa)' %}
+
+    <article
+        class="news-card"
+        data-url="{{ article.url }}"
+        data-source-name="{{ article.source_name }}"
+        data-original-title="{{ article.title }}"
+        data-scrapped="{{ 'true' if article.is_scrapped else 'false' }}"
+        aria-label="{{ article.source_name }} — {{ article.title }}"
+    >
+        <div class="card-body">
+            <!-- 헤더: 소스 아이콘 + 소스명 + 시간 -->
+            <div class="card-header">
+                <div class="source-icon" style="background: {{ src_color }}" aria-hidden="true">In</div>
+                <div class="card-source-info">
+                    <span class="card-source-name">{{ article.source_name }}</span>
+                </div>
+                <time class="card-time" datetime="{{ (article.published_at or article.collected_at).strftime('%Y-%m-%dT%H:%M:%S') }}">
+                    {% if article.published_at %}
+                        {{ article.published_at.strftime('%m/%d %H:%M') }}
+                    {% else %}
+                        {{ article.collected_at.strftime('%m/%d %H:%M') }}
+                    {% endif %}
+                </time>
+            </div>
+
+            <!-- 항목 제목 -->
+            <h2 class="card-title">
+                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="card-title-link">
+                    {{ article.title }}
+                </a>
+            </h2>
+
+            <!-- 브리핑 요약 -->
+            <div class="card-summary">
+                {% if article.summary_ko %}
+                    <p class="summary-text">{{ article.summary_ko | replace('\n', '<br>') | safe }}</p>
+                {% elif article.description %}
+                    <p class="summary-text description-fallback">{{ article.description[:120] }}{% if article.description|length > 120 %}...{% endif %}</p>
+                {% endif %}
+            </div>
+
+            <!-- 카드 푸터: 태그 + 액션 -->
+            <div class="card-footer">
+                <div class="card-tags">
+                    <span class="tag-region instinct">Instinct</span>
+                </div>
+                <div class="card-actions">
+                    <button
+                        class="scrap-btn{% if article.is_scrapped %} scrap-done{% endif %}"
+                        aria-label="Obsidian에 스크랩"
+                        title="Obsidian에 스크랩"
+                        {% if article.is_scrapped %}disabled{% endif %}
+                    >
+                        <span class="scrap-icon" aria-hidden="true">{% if article.is_scrapped %}✅{% else %}🔖{% endif %}</span>
+                        <span class="scrap-label">{% if article.is_scrapped %}저장됨{% else %}스크랩{% endif %}</span>
+                    </button>
+                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
+                        원문 보기 →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</section>
+
+{% else %}
+
+<!-- ── 항목 없음 안내 ── -->
+<div class="empty-state" role="main">
+    <div class="empty-icon" aria-hidden="true">📰</div>
+    <h2 class="empty-title">아직 적재된 브리핑 항목이 없습니다</h2>
+    <p class="empty-desc">
+        Instinct 아침 브리핑이 POST /api/briefing으로 전달되면 여기에 카드로 표시됩니다.
+    </p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    /* ──────────────────────────────────────────
+       스크랩 버튼 (Obsidian 큐) — 홈과 동일 동작
+    ────────────────────────────────────────── */
+    (function() {
+        var scrapBtns = document.querySelectorAll('.scrap-btn');
+        if (!scrapBtns.length) return;
+
+        function _resetScrapBtn(btn, iconEl, labelEl) {
+            btn.disabled = false;
+            btn.classList.remove('scrap-loading');
+            if (iconEl)  iconEl.textContent  = '🔖';
+            if (labelEl) labelEl.textContent = '스크랩';
+        }
+
+        function handleScrap(btn) {
+            var card = btn.closest('.news-card');
+            if (!card) return;
+
+            var title      = card.getAttribute('data-original-title') || '';
+            var url        = card.getAttribute('data-url') || '';
+            var sourceName = card.getAttribute('data-source-name') || '';
+
+            if (!url || !(url.startsWith('http://') || url.startsWith('https://'))) {
+                showToast({ type: 'error', title: '오류', message: 'URL을 찾을 수 없습니다.' });
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('scrap-loading');
+            var iconEl  = btn.querySelector('.scrap-icon');
+            var labelEl = btn.querySelector('.scrap-label');
+            if (iconEl)  iconEl.textContent  = '⏳';
+            if (labelEl) labelEl.textContent = '저장 중...';
+
+            fetch('/api/scrap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title, url: url, source_name: sourceName })
+            })
+            .then(function(res) {
+                return res.json().then(function(data) {
+                    return { ok: res.ok, data: data };
+                });
+            })
+            .then(function(result) {
+                if (result.ok) {
+                    btn.disabled = true;
+                    btn.classList.remove('scrap-loading');
+                    btn.classList.add('scrap-done');
+                    if (iconEl)  iconEl.textContent  = '✅';
+                    if (labelEl) labelEl.textContent = '저장됨';
+                    var msg = result.data.queued
+                        ? 'Obsidian 저장이 예약되었습니다.'
+                        : '이미 스크랩된 기사입니다.';
+                    showToast({ type: 'success', title: '스크랩 완료', message: msg });
+                } else {
+                    var errMsg = (result.data && result.data.detail) || '저장에 실패했습니다.';
+                    showToast({ type: 'error', title: '스크랩 실패', message: errMsg });
+                    _resetScrapBtn(btn, iconEl, labelEl);
+                }
+            })
+            .catch(function(err) {
+                showToast({ type: 'error', title: '요청 실패', message: err.message || '네트워크 오류' });
+                _resetScrapBtn(btn, iconEl, labelEl);
+            });
+        }
+
+        scrapBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (btn.classList.contains('scrap-done')) return;
+                handleScrap(btn);
+            });
+        });
+    })();
+</script>
+{% endblock %}
