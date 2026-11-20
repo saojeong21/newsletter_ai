@@ -29,15 +29,18 @@ Newsletter/
 ├── api/index.py          ← Vercel 진입점 (from app.main import app)
 ├── vercel.json           ← Vercel 빌드/라우팅/Cron 설정
 ├── app/
-│   ├── main.py           ← FastAPI 라우터 (/api/cron/collect 등)
+│   ├── main.py           ← FastAPI 라우터 (/api/cron/collect 등, /briefing)
+│   ├── briefing.py       ← 모닝 브리핑 JSON 로더 (data/briefings/*.json)
 │   ├── models.py         ← SQLAlchemy 모델 (Article)
 │   ├── database.py       ← SQLite 연결 (로컬 fallback용, 실서버는 Supabase)
 │   ├── supabase_db.py    ← Supabase httpx 직접 호출 (supabase-py 대신)
 │   ├── crawler.py        ← RSS 수집기 (URL 중복 방지)
 │   ├── scheduler.py      ← _async_collection_pipeline() (수집 전용)
 │   ├── sources.py        ← RSS 소스 목록 + AI 키워드 (활성 10개 / 비활성 5개)
-│   ├── templates/        ← base.html, index.html, news.html
+│   ├── templates/        ← base.html, index.html, news.html, briefing.html
 │   └── static/           ← style.css, favicon.svg
+├── data/briefings/       ← 모닝 브리핑 날짜별 JSON (YYYY-MM-DD.json)
+├── tests/                ← pytest 회귀 테스트 (briefing 페이지 등)
 ├── public/static/        ← Vercel CDN 서빙용 정적 파일 (style.css, favicon.svg)
 ├── .github/workflows/
 │   └── cron.yml          ← GitHub Actions 크론 (3시간마다 수집, Vercel 크론 백업)
@@ -92,6 +95,13 @@ Newsletter/
   - `logging.basicConfig()` 추가 — 큐 폴링 스레드 상태가 로그에 기록되지 않던 문제 수정
   - 스크랩 날짜 기준 파일 분리 — `_write_to_obsidian()`이 처리 시각(`now()`) 대신 `created_at`(KST 변환) 기준으로 날짜 파일 결정하도록 수정
   - **운영 주의**: `obsidian_agent.py` 수정 후 반드시 LaunchAgent 재시작 필요 (`launchctl unload/load`)
+- **20차 (11-20)**: 모닝 브리핑 `/briefing` 페이지 추가
+  - 상단 내비게이션에 `모닝 브리핑` 메뉴 추가 (홈·아카이브·API 유지)
+  - `data/briefings/YYYY-MM-DD.json` 을 읽어 1. AI·주식 / 2. 국내 부동산 / 3. 삼프로TV·경제방송 / 4. 링크드인 AI 피드 4섹션 카드 렌더링 (`app/briefing.py`)
+  - `?date=YYYY-MM-DD` 날짜 선택, 기본값은 최신 브리핑. 섹션 필터·검색·카드 🔖 스크랩(`/api/scrap`) 지원
+  - `vercel.json` `includeFiles` 에 `data/**` 추가 — JSON만 커밋·푸시하면 Vercel 자동 배포로 반영
+  - `obsidian_agent.py`: trafilatura 본문 추출 실패 시(링크드인 로그인 벽·유튜브) 에러 대신 제목·출처·링크만 담은 기본 노트 생성. `/scrap` 은 `full_text` 필드로 구분, 큐 항목은 `failed` 대신 `done` 처리
+  - `tests/test_briefing.py` 추가 — `/`, `/news`, `/api/articles`, `/briefing`(+날짜), 스크랩 연동, JSON 구조, 에이전트 폴백 검증
 
 ---
 
@@ -106,6 +116,7 @@ Newsletter/
 | AI 요약 | 뉴스레터 파이프라인에서 제거 (17차~), Obsidian 스크랩 시에만 실행 |
 | Obsidian 스크랩 | Supabase 큐 경유 (18차~) — 기기 간 동기화, MacBook 잠자기 중 큐 보관 후 처리 |
 | 스크랩 상태 동기화 | `ainewsletter_items.is_scrapped` — 웹/아이폰/아이패드 실시간 동기화 |
+| 모닝 브리핑 | `/briefing` — `data/briefings/*.json` 기반 4섹션, 2026-11-20 브리핑 수록 |
 
 ---
 
