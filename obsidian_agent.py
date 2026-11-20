@@ -160,8 +160,8 @@ def _summarize_article(title: str, content: str, source_name: str) -> Optional[s
 app = Flask(__name__)
 CORS(app, origins="*")  # 로컬 전용 데몬 — 모든 출처 허용
 
-# 2026-11-20: 사용자 요청으로 Journal → News 폴더로 변경
-OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian" / "02-Areas" / "News"
+# 2026-11-20: 사용자 요청으로 Journal → News → Instinct_Briefing 폴더로 변경
+OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian" / "02-Areas" / "Instinct_Briefing"
 
 
 def _write_to_obsidian(title: str, url: str, source_name: str, content: str, summary: Optional[str], scrap_dt: Optional[datetime] = None) -> str:
@@ -171,7 +171,9 @@ def _write_to_obsidian(title: str, url: str, source_name: str, content: str, sum
     if scrap_dt is not None:
         from datetime import timezone, timedelta as _td
         ref = scrap_dt + _td(hours=9)
-    today = ref.strftime("%Y-%m-%d")
+    # 사용자 노트 규칙: yy.mm.dd(Day) 형식, 요일은 영문 3글자, 괄호 앞 공백 없음 (예: 26.11.20(Fri))
+    _DAYS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    today = f"{ref.strftime('%y.%m.%d')}({_DAYS_EN[ref.weekday()]})"
     time_str = ref.strftime("%H:%M")
     file_path = OBSIDIAN_DIR / f"{today}.md"
 
