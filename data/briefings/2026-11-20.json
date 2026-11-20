@@ -8,7 +8,8 @@
     "이 화면은 저장소의 data/briefings/2026-11-20.json 을 읽어 렌더링합니다. 같은 형식으로 JSON을 커밋·푸시하면 Vercel 자동 배포로 바로 반영됩니다.",
     "링크드인 게시물은 로그인 벽이 있어 스크랩 시 본문 자동 추출이 실패할 수 있습니다. 이 경우에도 제목·출처·링크를 담은 기본 노트가 Obsidian에 저장됩니다.",
     "링크드인 게시 시점은 피드 표시값(20m~1d, 수집 시각 11/20 11:45 KST 기준 상대 표시)이며, Juseob Sim 글은 그룹 글이라 그룹 가입이 필요할 수 있습니다.",
-    "삼프로TV·한국경제TV 카드는 유튜브 채널 RSS에서 확인한 영상이며, 요약은 영상 제목이 밝힌 주제 범위 안에서만 정리했습니다."
+    "삼프로TV·한국경제TV 카드는 유튜브 채널 RSS에서 확인한 영상이며, 요약은 영상 제목이 밝힌 주제 범위 안에서만 정리했습니다.",
+    "채용 공고는 링크드인 공고 상세 페이지에서 직접 확인한 값이며, 게시 시각·지원자 수는 11/20 18시 50분(KST) 수집 시점의 표시값입니다."
   ],
   "sections": [
     {
@@ -587,6 +588,139 @@
           "posted_label": "1d",
           "summary": "글로벌 영업 AI 도구는 이메일·슬랙·화상회의 녹화를 읽지만, 한국 세일즈는 ① 개인 카톡(CRM·AI로 가져올 공식 통로 없음) ② 명함 앱(AI가 읽을 MCP·API가 없어 엑셀로 내보내 다시 붙여넣기)에서 이뤄집니다. 현실의 AI 연동 도구는 아직 손으로 정리한 엑셀·스프레드시트라는 지적과 함께, 이 로컬 맥락을 해결하는 B2B 솔루션이 AI native 세일즈 환경을 만들 것이라는 관점입니다.",
           "tags": ["AX", "세일즈"]
+        }
+      ]
+    },
+    {
+      "key": "jobs",
+      "no": 5,
+      "title": "링크드인 AI 채용 공고 (Director+)",
+      "icon": "💼",
+      "color": "#8b5cf6",
+      "lead": "링크드인에서 직접 확인한 AI 기업·AI 사업 조직의 Director 이상 비즈니스 직군 공고 12건입니다. 4시간 전 올라온 IBM·23시간 전 Anthropic처럼 지원자가 적은 신규 공고부터, 한국 엔터프라이즈 시장을 여는 AI 랩(OpenAI·Sierra·Cohere)의 세일즈 리더 자리까지 지원 가치가 높은 순으로 담았습니다.",
+      "items": [
+        {
+          "title": "Sales Director — Anthropic",
+          "author": "Anthropic",
+          "url": "https://www.linkedin.com/jobs/view/4492146287/",
+          "source_name": "LinkedIn",
+          "posted_label": "23시간 전",
+          "summary": "한국 엔터프라이즈 시장의 Account Executive 팀을 이끌며 Claude 도입을 확대하는 세일즈 리더입니다. 엔터프라이즈 세일즈 15년 이상·세일즈 리딩 5년 이상, 비즈니스 수준의 한국어가 요구되며 APAC 확장의 핵심 역할로 소개됩니다. 하이브리드(사무실 최소 25%) 근무입니다.",
+          "tags": ["AI 랩", "Sales 리드", "서울"],
+          "note": "지원자 67명 · 얼리 어플리컨트",
+          "highlight": true
+        },
+        {
+          "title": "Account Director, Large Enterprise — OpenAI",
+          "author": "OpenAI",
+          "url": "https://www.linkedin.com/jobs/view/4418853791/",
+          "source_name": "LinkedIn",
+          "posted_label": "3일 전",
+          "summary": "국내 대기업 핵심 계정을 맡아 파이프라인 생성부터 배포까지 전 과정을 리드하고 consumption 매출 목표를 오너십하는 역할입니다. PaaS/SaaS 세일즈 10년 이상, 한국어·영어 유창성이 필요하며 서울 기준 주 3일 출근 하이브리드입니다.",
+          "tags": ["AI 랩", "엔터프라이즈 세일즈", "서울"],
+          "note": "지원자 200명 이상",
+          "highlight": true
+        },
+        {
+          "title": "Enterprise Sales Director — Sierra",
+          "author": "Sierra",
+          "url": "https://www.linkedin.com/jobs/view/4490090305/",
+          "source_name": "LinkedIn",
+          "posted_label": "1주 전",
+          "summary": "Bret Taylor·Clay Bavor가 세운 고객응대 AI 에이전트 기업의 한국 엔터프라이즈 세일즈 리드입니다. GAP·Rocket Mortgage·SoFi·SoftBank 등과 일하는 초기 GTM 팀으로 프로스펙팅부터 복잡한 딜 협상·클로징까지 직접 수행하며, 엔터프라이즈 고객 대응 세일즈 10년 이상이 필요합니다.",
+          "tags": ["AI 에이전트", "Sales 리드", "서울"],
+          "note": "지원자 44명 · 온사이트"
+        },
+        {
+          "title": "Senior Director, Solutions Architecture, APAC — Cohere",
+          "author": "Cohere",
+          "url": "https://www.linkedin.com/jobs/view/4454764795/",
+          "source_name": "LinkedIn",
+          "posted_label": "5일 전 (재게시)",
+          "summary": "한국·일본·동남아를 아우르는 APAC Solutions Architecture 조직을 새로 만들고 이끄는 시니어 디렉터 자리입니다. SA/SE/기술 컨설팅 15년 이상(그중 7년 이상 조직 리딩), 규제 산업의 온프레미스·에어갭 AI 배포 경험이 요구됩니다.",
+          "tags": ["엔터프라이즈 AI", "Solutions", "APAC"],
+          "note": "지원자 166명 · 서울(Remote) 표기"
+        },
+        {
+          "title": "APJ Manufacturing & Automotive Industry GTM Leader — Databricks",
+          "author": "Databricks",
+          "url": "https://www.linkedin.com/jobs/view/4478618083/",
+          "source_name": "LinkedIn",
+          "posted_label": "1주 전",
+          "summary": "APJ 제조·자동차 산업의 GTM 전략을 이끄는 시니어 실행 리더로, 일본·한국·인도 고객과 파트너의 임원 관계 구축이 핵심입니다. 데이터·AI로 산업별 파이프라인과 도입을 키우는 역할이며 APJ 출장이 잦습니다.",
+          "tags": ["Data/AI", "GTM", "APJ"],
+          "note": "지원자 54명"
+        },
+        {
+          "title": "Sales Director, Korea — ServiceNow",
+          "author": "ServiceNow",
+          "url": "https://www.linkedin.com/jobs/view/4483578835/",
+          "source_name": "LinkedIn",
+          "posted_label": "3주 전",
+          "summary": "한국 직접영업 조직을 새로 구축하고 이끄는 세일즈 디렉터입니다. 재벌·대기업 C-level 관계 중심의 영업 전략, 채용·코칭, 파이프라인·포캐스트 관리가 핵심이며 한국어·영어 능통을 요구합니다. 공고 자격요건에 AI를 업무에 통합하는 역량이 명시돼 있습니다.",
+          "tags": ["엔터프라이즈 AI", "Sales 리드", "한국"],
+          "note": "지원자 65명 · 하이브리드"
+        },
+        {
+          "title": "Head of Professional Services, Korea — AWS",
+          "author": "Amazon Web Services (AWS)",
+          "url": "https://www.linkedin.com/jobs/view/4455779975/",
+          "source_name": "LinkedIn",
+          "posted_label": "6일 전",
+          "summary": "한국 ProServe 사업의 P&L을 총괄하는 조직장입니다. ProServe AE·클라우드 아키텍트 팀을 이끌며 IT 전략·마이그레이션·모더나이제이션과 생성형 AI 컨설팅 프로젝트를 국내 대기업에 전달합니다.",
+          "tags": ["Cloud", "GenAI", "조직장"],
+          "note": "지원자 104명"
+        },
+        {
+          "title": "Consulting Practice Lead — Microsoft",
+          "author": "Microsoft",
+          "url": "https://www.linkedin.com/jobs/view/4490747032/",
+          "source_name": "LinkedIn",
+          "posted_label": "6일 전",
+          "summary": "한국 컨설팅 사업의 전략·성장·재무 성과와 딜리버리까지 오너십하는 프랙티스 리드입니다. 클라우드·AI·디지털 전환을 수행하는 팀을 이끌고 마이크로소프트 국가 리더십·세일즈·엔지니어링과 협업합니다.",
+          "tags": ["Cloud", "AI 컨설팅", "서울"],
+          "note": "지원자 65명 · 하이브리드"
+        },
+        {
+          "title": "Associate Partner, Tech & AI — McKinsey & Company",
+          "author": "McKinsey & Company",
+          "url": "https://www.linkedin.com/jobs/view/4382955444/",
+          "source_name": "LinkedIn",
+          "posted_label": "2주 전",
+          "summary": "테크·AI 영역의 어소시에이트 파트너로, 고객사 최고경영진과 함께 프로젝트를 이끌고 내부 인력에게 코칭과 방향을 제공합니다. 파트너 트랙에 막 진입하는 시니어 컨설팅 포지션입니다.",
+          "tags": ["AI 컨설팅", "Strategy", "서울"],
+          "note": "지원자 200명 이상"
+        },
+        {
+          "title": "AI Biz 리더 (부장~이사급) — Concentrix",
+          "author": "Concentrix",
+          "url": "https://www.linkedin.com/jobs/view/4482446726/",
+          "source_name": "LinkedIn",
+          "posted_label": "4주 전",
+          "summary": "AI 사업 개발·수주, AX 컨설팅, AI-Ready 데이터, AI Agent 개발·운영까지 총괄하는 국내 AI 사업 리더입니다. 관련 분야 12~15년 이상과 리더(PM/PL/팀장) 경험, 기업 대상 AI/Data/Agent 프로젝트 구축 경험이 필수입니다.",
+          "tags": ["AI 사업", "AX", "국내"],
+          "note": "지원자 54명 · 강남 온사이트 · 간편지원"
+        },
+        {
+          "title": "Regional Sales Director, Confluent — IBM",
+          "author": "IBM",
+          "url": "https://www.linkedin.com/jobs/view/4491679848/",
+          "source_name": "LinkedIn",
+          "posted_label": "4시간 전",
+          "summary": "IBM이 운영하는 Confluent(데이터 스트리밍) 사업의 아시아 지역 세일즈 디렉터로, Enterprise AE 팀을 이끌며 신규 사업과 consumption 확대를 만듭니다. 오늘 올라와 지원자가 가장 적은 공고입니다.",
+          "tags": ["데이터 스트리밍", "Sales 리드", "서울"],
+          "note": "지원자 25명 이내 · 서울(Remote) 표기",
+          "highlight": true
+        },
+        {
+          "title": "Country Manager (AI Cyber Defense) — OrcaRouter",
+          "author": "OrcaRouter",
+          "url": "https://www.linkedin.com/jobs/view/4475436357/",
+          "source_name": "LinkedIn",
+          "posted_label": "1개월 전",
+          "summary": "AI 사이버 방어 제품의 한국 컨트리 매니저로, 국가 단위 리더십과 보안·AI 인프라·엔터프라이즈 테크 경험을 요구합니다. 직급은 과장·부장으로 표기됐고 한국어가 필수, 영어는 업무 수준이 필요합니다.",
+          "tags": ["AI 보안", "Country Manager", "서울"],
+          "note": "지원자 158명 · 과장·부장"
         }
       ]
     }
