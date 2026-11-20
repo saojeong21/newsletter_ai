@@ -5,7 +5,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -178,7 +178,8 @@ async def morning_briefing(
             "available_dates": dates,
             "newer_date": newer_date,
             "older_date": older_date,
-            "today": datetime.today().strftime("%Y-%m-%d"),
+            # 날짜 선택기 max 값 — Vercel(UTC)에서도 한국 날짜 기준으로 계산한다
+            "today": (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d"),
         },
     )
 
