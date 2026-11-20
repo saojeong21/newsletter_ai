@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if briefing %}{{ briefing.date_label }} 모닝 브리핑{% else %}모닝 브리핑{% endif %} — AI 뉴스레터{% endblock %}
+{% block title %}{% if briefing %}{{ briefing.date_label }} 피클’s 모닝 브리핑{% else %}피클’s 모닝 브리핑{% endif %} — AI 뉴스레터{% endblock %}
 
 {% block content %}
 
@@ -22,10 +22,10 @@
 <section class="page-hero briefing-hero" aria-labelledby="briefingTitle">
     <div class="hero-pill" aria-hidden="true">
         <span class="hero-pill-dot"></span>
-        모닝 브리핑 · 매일 오전 10시
+        피클’s 모닝 브리핑 · 매일 오전 10시
     </div>
 
-    <h1 class="hero-title" id="briefingTitle">{{ briefing.date_label }} 모닝 브리핑</h1>
+    <h1 class="hero-title" id="briefingTitle">{{ briefing.date_label }} 피클’s 모닝 브리핑</h1>
 
     {% if briefing.headline %}
     <p class="briefing-headline">{{ briefing.headline }}</p>
@@ -241,7 +241,7 @@
 <!-- 브리핑 데이터 자체가 없는 경우 -->
 <div class="empty-state" role="main">
     <div class="empty-icon" aria-hidden="true">☕</div>
-    <h2 class="empty-title">아직 모닝 브리핑이 없습니다</h2>
+    <h2 class="empty-title">아직 피클’s 모닝 브리핑이 없습니다</h2>
     <p class="empty-desc">
         data/briefings/YYYY-MM-DD.json 파일을 추가하고 커밋·푸시하면<br>
         Vercel 자동 배포로 이 화면에 브리핑이 나타납니다.

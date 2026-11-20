@@ -69,13 +69,24 @@ def test_briefing_default_page_renders():
     assert res.status_code == 200
     assert "/briefing" in res.text
     assert BRIEFING_DATE in res.text
-    assert "모닝 브리핑" in res.text
+    assert "피클’s 모닝 브리핑" in res.text
+
+
+def test_briefing_title_and_nav_use_pickle_brand():
+    """화면 제목(<title>·히어로)과 상단 메뉴가 '피클’s 모닝 브리핑'으로 표시된다."""
+    html = client.get(f"/briefing?date={BRIEFING_DATE}").text
+    assert "2026년 11월 20일 (금) 피클’s 모닝 브리핑" in html
+    assert 'class="hero-title" id="briefingTitle"' in html
+    assert ">피클’s 모닝 브리핑</a>" in html
+    assert "피클’s 모닝 브리핑 · 매일 오전 10시" in html
+    assert ">모닝 브리핑</a>" not in html
 
 
 def test_briefing_explicit_date_renders():
     res = client.get(f"/briefing?date={BRIEFING_DATE}")
     assert res.status_code == 200
     assert "2026년 11월 20일 (금)" in res.text
+    assert "<title>2026년 11월 20일 (금) 피클’s 모닝 브리핑 — AI 뉴스레터</title>" in res.text
 
 
 def test_briefing_unknown_date_falls_back_to_latest():
@@ -148,7 +159,7 @@ def test_briefing_empty_state_without_data(monkeypatch, tmp_path):
     monkeypatch.setattr(briefing_mod, "BRIEFING_DIRS", (str(tmp_path),))
     res = client.get("/briefing")
     assert res.status_code == 200
-    assert "아직 모닝 브리핑이 없습니다" in res.text
+    assert "아직 피클’s 모닝 브리핑이 없습니다" in res.text
 
 
 # ── 스크랩 연동 ──

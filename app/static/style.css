@@ -186,6 +186,7 @@ img {
 
 .nav-link {
     padding: 0.4rem 0.75rem;
+    white-space: nowrap;
     border-radius: var(--radius-pill);
     font-size: var(--font-size-sm);
     font-weight: 500;
@@ -1371,6 +1372,11 @@ img {
 
 /* ── 23. 반응형 ── */
 @media (max-width: 480px) {
+    .header-nav {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
     .header-nav .nav-link {
         padding: 0.35rem 0.5rem;
         font-size: var(--font-size-xs);
