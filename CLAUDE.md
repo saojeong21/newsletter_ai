@@ -61,25 +61,9 @@ Newsletter/
 - **10차 (03-12)**: GitHub Actions 3시간 크론 추가, Vercel Protection 우회
 - **11~12차 (03-14~03-16)**: 모델 교체(NVIDIA→DeepSeek), 크론 8회/일·요약 80건/일로 개선
 - **13차 (03-17)**: 아키텍처 검토 — 모델 ID 수정, 프롬프트 강화, HTML \n→br 버그, limit DB 직달, asyncio 수정, AI_KEYWORDS 보강
-- **14차 (03-17)**: UI 전면 리디자인 — 모던 카드 레이아웃
-  - Morning Brew 다크 테마 → 라벤더-화이트 배경 (`#f5f4ff`) 클린 카드 UI로 교체
-  - 폰트: Playfair Display + Inter → **DM Sans + Noto Sans KR**
-  - 히어로: 그라디언트 타이틀, 통계 뱃지, 날짜 선택기 + 수집 버튼 한 줄 배치
-  - 소스 카드 스트립: 소스별 앱 아이콘 스타일 컬러 뱃지 + 기사 수 표시
-  - 뉴스 카드: 3열 그리드, 소스 컬러 아이콘, 검색+지역 필터 바
-  - `public/static/style.css` 동시 업데이트 (Vercel CDN 반영)
-- **15차 (03-17)**: 요약 언어 소스별 자동 분리
-  - 국내 소스(AI타임스, 한국경제 IT) → 한국어 3줄 요약
-  - 해외 소스(TechCrunch, VentureBeat 등) → 영어 3문장 요약
-  - `_is_korean_source()` 판별 함수 + `SUMMARY_PROMPT_EN` 템플릿 추가
-  - 기존 요약 완료 기사는 재처리 없음 (신규 기사부터 적용)
-- **16차 (04-01)**: Obsidian 저널 스크랩 기능 (완료)
-  - 기사 카드에 🔖 스크랩 버튼 추가 — 클릭 시 원문 크롤링 후 로컬 Obsidian에 저장
-  - `obsidian_agent.py` 로컬 데몬: trafilatura 크롤링 → `~/Documents/Obsidian/02-Areas/Journal/YYYY-MM-DD.md` append (날짜별 단일 파일, `---` 구분)
-  - LaunchAgent 등록 (`~/Library/LaunchAgents/com.newsletter.obsidian-agent.plist`) — 로그인 시 자동 시작, `--ssl` 모드로 상시 실행
-  - mkcert SSL (`~/.mkcert/192.168.0.10+1.pem`) — HTTPS 지원
-  - 실행: `pip install flask flask-cors trafilatura lxml_html_clean` (최초 1회, 이후 LaunchAgent 자동 실행)
-  - **18차에서 변경**: 브라우저 직접 호출 제거 → Supabase 큐 폴링 방식으로 전환
+- **14차 (03-17)**: UI 리디자인 — 라벤더-화이트 카드 UI, DM Sans + Noto Sans KR, 3열 그리드·검색/지역 필터
+- **15차 (03-17)**: 요약 언어 소스별 분리 (국내 → 한국어 3줄, 해외 → 영어 3문장, `_is_korean_source()`)
+- **16차 (04-01)**: Obsidian 스크랩 — 카드 🔖 버튼, 로컬 데몬 `obsidian_agent.py`(trafilatura), LaunchAgent `com.newsletter.obsidian-agent`(`--ssl`, mkcert `~/.mkcert/{LAN IP}+1.pem`). 18차에서 큐 폴링 방식으로 전환
 - **17차 (04-04)**: AI 요약을 뉴스레터 파이프라인에서 제거, Obsidian 스크랩 전용으로 이전
   - `app/summarizer.py` 삭제, `/api/summarize` · `/api/cron/summarize` 엔드포인트 제거
   - GitHub Actions cron에서 summarize 잡 2개 제거, Vercel Cron에서 summarize 스케줄 제거
@@ -102,10 +86,23 @@ Newsletter/
   - `vercel.json` `includeFiles` 에 `data/**` 추가 — JSON만 커밋·푸시하면 Vercel 자동 배포로 반영
   - `obsidian_agent.py`: trafilatura 본문 추출 실패 시(링크드인 로그인 벽·유튜브) 에러 대신 제목·출처·링크만 담은 기본 노트 생성. `/scrap` 은 `full_text` 필드로 구분, 큐 항목은 `failed` 대신 `done` 처리
   - `tests/test_briefing.py` 추가 — `/`, `/news`, `/api/articles`, `/briefing`(+날짜), 스크랩 연동, JSON 구조, 에이전트 폴백 검증
+- **21차 (11-20)**: Instinct 브리핑 연동 + Obsidian 소스별 폴더 분리 (PR #1~#5)
+  - `POST /api/briefing` (CRON_SECRET) → `ainewsletter_items`에 `source_name="Instinct 브리핑"`, `full_text`·`category` 저장. `POST /api/briefing/category` 백필
+  - `/instinct-briefing` 카테고리 5섹션 페이지. 홈·아카이브에서는 Instinct 카드 제외
+  - 마이그레이션: `migrations/2026-11-20-*.sql` (full_text, scrap_queue.content, category)
+  - 저장 폴더: `~/Documents/Obsidian/01-Daily/{Instinct Briefing | Pickle Briefing | AI Newsletter}/yy.mm.dd(Day).md`, 최신 항목이 맨 위. 피클은 source_name 접두사 `"피클 브리핑 · "`로 구분
+  - 큐 폴링 5초, 큐 `content`가 있으면 재크롤링 생략
+  - **의도**: 피클·Instinct에 같은 과제를 줘 에이전트 품질 비교 + 커버리지 확대. 같은 URL은 한 번만 저장(의도된 중복 제거)
+- **22차 (11-20)**: 점검 후속 수정
+  - `obsidian_agent.py` `_resolve_ssl_cert()` — IP 변경 시 mkcert 자동 생성 → 기존 인증서 대체 → HTTP 순으로 폴백. 이전에는 `sys.exit(1)` + KeepAlive로 5초 크래시 루프가 생겨 로그가 1.3GB까지 커짐
+  - `/instinct-briefing?date=YYYY-MM-DD` — KST 적재일별 표시, 날짜 선택기·칩 (기본 최신일). `get_briefing_dates()` + `get_briefing_items_for_day()`
+  - `_parse_dt`·에이전트 `created_at` 파싱 — Python 3.9 `fromisoformat`이 Supabase의 소수점 5자리 시각을 못 읽어 None이 되던 버그 수정 (Instinct 페이지 500 원인)
+  - 테스트 38개 (폴더 라우팅, 최신 항목 맨 위 삽입, 인증서 폴백, Instinct 날짜 필터, 타임스탬프 파싱 추가)
+  - 실행: `.venv-test/bin/python -m pytest tests -q` (Supabase stub, 네트워크 불필요)
 
 ---
 
-## 현재 상태 (2026-04-09 기준)
+## 현재 상태 (2026-11-20 기준)
 
 | 항목 | 상태 |
 |---|---|
@@ -116,7 +113,9 @@ Newsletter/
 | AI 요약 | 뉴스레터 파이프라인에서 제거 (17차~), Obsidian 스크랩 시에만 실행 |
 | Obsidian 스크랩 | Supabase 큐 경유 (18차~) — 기기 간 동기화, MacBook 잠자기 중 큐 보관 후 처리 |
 | 스크랩 상태 동기화 | `ainewsletter_items.is_scrapped` — 웹/아이폰/아이패드 실시간 동기화 |
-| 모닝 브리핑 | `/briefing` — `data/briefings/*.json` 기반 4섹션, 2026-11-20 브리핑 수록 |
+| 피클 브리핑 | `/briefing` — `data/briefings/*.json` 기반 4섹션 + 추가 섹션(jobs) |
+| Instinct 브리핑 | `/instinct-briefing` — Supabase 기반 5카테고리, 날짜별 |
+| Obsidian 저장 | `01-Daily/` 아래 3개 폴더로 소스별 분리 |
 
 ---
 
