@@ -343,6 +343,23 @@ def save_briefing_item(
     return save_article(data)
 
 
+def get_briefing_items(limit: int = 100) -> List[ArticleRow]:
+    """Instinct 브리핑 항목을 최신순으로 가져온다."""
+    with _client() as c:
+        resp = c.get(
+            f"{_base_url()}/{TABLE}",
+            headers=_headers(),
+            params={
+                "source_name": f"eq.{BRIEFING_SOURCE_NAME}",
+                "order": "collected_at.desc",
+                "limit": str(limit),
+                "select": "*",
+            },
+        )
+        resp.raise_for_status()
+        return [ArticleRow.from_dict(row) for row in resp.json()]
+
+
 def complete_scrap(queue_id: int, success: bool, error_message: Optional[str] = None) -> None:
     """Mark a scrap queue item as done or failed."""
     payload = {

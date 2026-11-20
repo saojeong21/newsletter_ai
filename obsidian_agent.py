@@ -160,8 +160,15 @@ def _summarize_article(title: str, content: str, source_name: str) -> Optional[s
 app = Flask(__name__)
 CORS(app, origins="*")  # 로컬 전용 데몬 — 모든 출처 허용
 
-# 2026-11-20: 사용자 요청으로 Journal → News → Instinct_Briefing 폴더로 변경
-OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian" / "02-Areas" / "Instinct_Briefing"
+# 2026-11-20: 소스별 저장 폴더 분리 (사용자 요청)
+# - Instinct 브리핑:        01-Daily/Instinct Briefing, 날짜 yy.mm.dd(Day) (예: 26.11.20(Fri))
+# - 피클 브리핑 (접두사 구분): 01-Daily/Pickle Briefing,  날짜 YYYY-MM-DD
+# - 그 외 AI 뉴스레터(RSS):   01-Daily/AI Newsletter,     날짜 YYYY-MM-DD
+OBSIDIAN_BASE_DIR = Path.home() / "Documents" / "Obsidian" / "01-Daily"
+INSTINCT_BRIEFING_SOURCE = "Instinct 브리핑"
+PICKLE_BRIEFING_PREFIX = "피클 브리핑 · "
+# 로케일과 무관하게 영문 3글자 요일을 쓰기 위한 수동 매핑 (strftime %a는 로케일을 탄다)
+_DAYS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def _write_to_obsidian(title: str, url: str, source_name: str, content: str, summary: Optional[str], scrap_dt: Optional[datetime] = None) -> str:
@@ -171,11 +178,18 @@ def _write_to_obsidian(title: str, url: str, source_name: str, content: str, sum
     if scrap_dt is not None:
         from datetime import timezone, timedelta as _td
         ref = scrap_dt + _td(hours=9)
-    # 사용자 노트 규칙: yy.mm.dd(Day) 형식, 요일은 영문 3글자, 괄호 앞 공백 없음 (예: 26.11.20(Fri))
-    _DAYS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    today = f"{ref.strftime('%y.%m.%d')}({_DAYS_EN[ref.weekday()]})"
+    if source_name == INSTINCT_BRIEFING_SOURCE:
+        # Instinct 브리핑 노트 규칙: yy.mm.dd(Day), 요일 영문 3글자, 괄호 앞 공백 없음
+        today = f"{ref.strftime('%y.%m.%d')}({_DAYS_EN[ref.weekday()]})"
+        target_dir = OBSIDIAN_BASE_DIR / "Instinct Briefing"
+    elif source_name.startswith(PICKLE_BRIEFING_PREFIX):
+        today = ref.strftime("%Y-%m-%d")
+        target_dir = OBSIDIAN_BASE_DIR / "Pickle Briefing"
+    else:
+        today = ref.strftime("%Y-%m-%d")
+        target_dir = OBSIDIAN_BASE_DIR / "AI Newsletter"
     time_str = ref.strftime("%H:%M")
-    file_path = OBSIDIAN_DIR / f"{today}.md"
+    file_path = target_dir / f"{today}.md"
 
     summary_block = ""
     if summary:
@@ -190,7 +204,7 @@ def _write_to_obsidian(title: str, url: str, source_name: str, content: str, sum
         f"---\n"
     )
 
-    OBSIDIAN_DIR.mkdir(parents=True, exist_ok=True)
+    target_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         if file_path.exists():
