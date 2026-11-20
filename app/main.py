@@ -104,6 +104,8 @@ async def home(
 ):
     target_date = _parse_date_param(date)
     articles = supabase_db.get_articles_by_date(target_date)
+    # Instinct 브리핑 카드는 전용 페이지(/instinct-briefing)에서만 보이도록 홈에서는 제외
+    articles = [a for a in articles if a.source_name != supabase_db.BRIEFING_SOURCE_NAME]
     available_dates = supabase_db.get_available_dates()
 
     today_str = datetime.today().strftime("%Y-%m-%d")
@@ -127,6 +129,8 @@ async def news_archive(
 ):
     target_date = _parse_date_param(date)
     articles = supabase_db.get_articles_by_date(target_date)
+    # 홈과 마찬가지로 Instinct 브리핑 카드는 아카이브에서도 제외 (전용 페이지에서만 표시)
+    articles = [a for a in articles if a.source_name != supabase_db.BRIEFING_SOURCE_NAME]
     available_dates = supabase_db.get_available_dates()
 
     return templates.TemplateResponse(
