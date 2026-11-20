@@ -160,7 +160,8 @@ def _summarize_article(title: str, content: str, source_name: str) -> Optional[s
 app = Flask(__name__)
 CORS(app, origins="*")  # 로컬 전용 데몬 — 모든 출처 허용
 
-OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian" / "02-Areas" / "Journal"
+# 2026-11-20: 사용자 요청으로 Journal → News 폴더로 변경
+OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian" / "02-Areas" / "News"
 
 
 def _write_to_obsidian(title: str, url: str, source_name: str, content: str, summary: Optional[str], scrap_dt: Optional[datetime] = None) -> str:
@@ -316,7 +317,7 @@ def _fetch_pending_scraps() -> list:
                 "status": "eq.pending",
                 "order": "created_at.asc",
                 "limit": "20",
-                "select": "id,article_url,title,source_name,created_at",
+                "select": "id,article_url,title,source_name,created_at,content",
             },
             timeout=15,
         )
@@ -366,7 +367,12 @@ def _process_queue_item(item: dict) -> None:
 
     logger.info(f"큐 처리 시작: [{queue_id}] {title[:50]}")
 
-    content = _extract_content(url)
+    # 큐에 전문이 실려 있으면(Instinct 브리핑 등 로그인/페이월 뒤 원문) 재수집 없이 사용한다.
+    content = (item.get("content") or "").strip() or None
+    if content:
+        logger.info(f"큐에 포함된 전문 사용 (재수집 생략): [{queue_id}]")
+    else:
+        content = _extract_content(url)
     full_text = bool(content)
 
     if not full_text:

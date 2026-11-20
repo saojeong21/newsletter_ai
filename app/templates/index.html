@@ -168,13 +168,14 @@
         or '한겨레' in article.source_name
         or 'naver' in src_key
         or 'kakao' in src_key %}
+    {% set is_briefing = article.source_name == 'Instinct 브리핑' %}
     {% set src_color = src_colors.get(article.source_name, 'linear-gradient(135deg,#6b7280,#9ca3af)') %}
     {% set src_initials = article.source_name[:2] %}
 
     <article
         class="news-card"
         data-source="{{ src_key }}"
-        data-region="{% if is_domestic %}domestic{% else %}international{% endif %}"
+        data-region="{% if is_briefing %}instinct{% elif is_domestic %}domestic{% else %}international{% endif %}"
         data-title="{{ article.title | lower }}"
         data-url="{{ article.url }}"
         data-source-name="{{ article.source_name }}"
@@ -219,9 +220,13 @@
             <!-- 카드 푸터: 태그 + 액션 -->
             <div class="card-footer">
                 <div class="card-tags">
+                    {% if is_briefing %}
+                    <span class="tag-region instinct">Instinct</span>
+                    {% else %}
                     <span class="tag-region {% if is_domestic %}domestic{% else %}international{% endif %}">
                         {% if is_domestic %}국내{% else %}해외{% endif %}
                     </span>
+                    {% endif %}
                     {% if article.is_summarized and article.summary_ko %}
                         <span class="ai-badge">AI 요약</span>
                     {% endif %}
