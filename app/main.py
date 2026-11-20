@@ -261,8 +261,14 @@ async def scrap_article(request: Request):
         raise HTTPException(status_code=400, detail="유효하지 않은 URL입니다")
 
     try:
+        # 원문 전문이 저장된 항목(Instinct 브리핑 등)은 큐에 함께 실어 보낸다.
+        # full_text 컬럼 마이그레이션 전이라도 스크랩은 동작해야 하므로 조회 실패는 무시한다.
+        try:
+            full_text = supabase_db.get_article_full_text(url)
+        except Exception:
+            full_text = None
         supabase_db.mark_article_scrapped(url)
-        queue_id = supabase_db.enqueue_scrap(url, title, source_name)
+        queue_id = supabase_db.enqueue_scrap(url, title, source_name, content=full_text)
         return {
             "status": "ok",
             "queued": queue_id is not None,
@@ -295,3 +301,55 @@ async def mark_scrap_done(request: Request):
 
     supabase_db.complete_scrap(queue_id, success, error_message)
     return {"status": "ok"}
+
+
+@app.post("/api/briefing", summary="Instinct 아침 브리핑 항목 추가 (에이전트용)")
+async def add_briefing(request: Request):
+    """Instinct 에이전트가 생성한 아침 브리핑 항목을 기사로 적재한다.
+
+    body: {
+        "date": "2026-11-21",           # 선택(참고용)
+        "items": [
+            {"title": str, "url": str, "summary": str, "fulltext": str?},
+            ...
+        ]
+    }
+    항목은 source_name="Instinct 브리핑"으로 저장되어 홈/아카이브 카드에 자연스럽게 표시된다.
+    """
+    _verify_cron_secret(request)
+    data = await request.json()
+    items = data.get("items")
+    if not isinstance(items, list) or not items:
+        raise HTTPException(status_code=400, detail="items 배열이 필요합니다")
+    if len(items) > 100:
+        raise HTTPException(status_code=400, detail="items는 한 번에 최대 100개까지 가능합니다")
+
+    inserted = 0
+    skipped: list = []
+    errors: list = []
+    for raw in items:
+        title = (raw.get("title") or "").strip()
+        url = (raw.get("url") or "").strip()
+        summary = (raw.get("summary") or "").strip()
+        fulltext = (raw.get("fulltext") or "").strip() or None
+        if not title or not (url.startswith("http://") or url.startswith("https://")):
+            skipped.append(url or title or "(제목 없음)")
+            continue
+        try:
+            if supabase_db.url_exists(url):
+                skipped.append(url)
+                continue
+            row = supabase_db.save_briefing_item(
+                title=title,
+                url=url,
+                summary=summary,
+                full_text=fulltext,
+                source_url=data.get("source_url"),
+            )
+            if row:
+                inserted += 1
+        except Exception as e:
+            logger.error(f"브리핑 항목 저장 실패: {url} — {e}")
+            errors.append(url)
+
+    return {"status": "ok", "inserted": inserted, "skipped": skipped, "errors": errors}

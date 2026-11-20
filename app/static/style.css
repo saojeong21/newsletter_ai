@@ -683,6 +683,12 @@ img {
     border: 1px solid var(--accent-mid);
 }
 
+.tag-region.instinct {
+    background: #ede9fe;
+    color: #5b21b6;
+    border: 1px solid #ddd6fe;
+}
+
 .ai-badge {
     display: inline-flex;
     align-items: center;
