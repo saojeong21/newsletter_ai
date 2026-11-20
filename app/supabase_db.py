@@ -243,8 +243,12 @@ def mark_article_scrapped(article_url: str) -> bool:
 SCRAP_QUEUE_TABLE = "scrap_queue"
 
 
-def enqueue_scrap(article_url: str, title: str, source_name: str) -> Optional[int]:
-    """Add a scrap request to the queue. Returns queue item id."""
+def enqueue_scrap(article_url: str, title: str, source_name: str, content: Optional[str] = None) -> Optional[int]:
+    """Add a scrap request to the queue. Returns queue item id.
+
+    content가 있으면(예: Instinct 브리핑 항목의 원문 전문) 큐에 함께 저장해
+    에이전트가 본문 재수집 없이 사용할 수 있게 한다.
+    """
     # Skip if already pending or done for this URL
     with _client() as c:
         existing = c.get(
@@ -261,14 +265,17 @@ def enqueue_scrap(article_url: str, title: str, source_name: str) -> Optional[in
         if existing.json():
             return None  # Already queued or done
 
+        payload = {
+            "article_url": article_url,
+            "title": title,
+            "source_name": source_name,
+        }
+        if content:
+            payload["content"] = content
         resp = c.post(
             f"{_base_url()}/{SCRAP_QUEUE_TABLE}",
             headers=_service_headers(),
-            json={
-                "article_url": article_url,
-                "title": title,
-                "source_name": source_name,
-            },
+            json=payload,
         )
         resp.raise_for_status()
         result = resp.json()
@@ -285,11 +292,55 @@ def get_pending_scraps(limit: int = 20) -> List[dict]:
                 "status": "eq.pending",
                 "order": "created_at.asc",
                 "limit": str(limit),
-                "select": "id,article_url,title,source_name",
+                "select": "id,article_url,title,source_name,content",
             },
         )
         resp.raise_for_status()
         return resp.json()
+
+
+def get_article_full_text(article_url: str) -> Optional[str]:
+    """ainewsletter_items.full_text 조회 (없으면 None)."""
+    with _client() as c:
+        resp = c.get(
+            f"{_base_url()}/{TABLE}",
+            headers=_headers(),
+            params={"url": f"eq.{article_url}", "select": "full_text", "limit": "1"},
+        )
+        resp.raise_for_status()
+        rows = resp.json()
+        return rows[0].get("full_text") if rows else None
+
+
+BRIEFING_SOURCE_NAME = "Instinct 브리핑"
+
+
+def save_briefing_item(
+    title: str,
+    url: str,
+    summary: str,
+    full_text: Optional[str] = None,
+    source_url: Optional[str] = None,
+) -> Optional[ArticleRow]:
+    """Instinct 아침 브리핑 항목을 ainewsletter_items에 저장한다.
+
+    is_summarized=False로 두어 'AI 요약' 배지는 기존 OpenRouter 파이프라인
+    산출물에만 붙게 한다. summary_ko에는 브리핑 요약을 그대로 담는다.
+    """
+    now = datetime.utcnow().isoformat()
+    data = {
+        "title": title,
+        "url": url,
+        "source_name": BRIEFING_SOURCE_NAME,
+        "source_url": source_url,
+        "published_at": now,
+        "collected_at": now,
+        "description": (summary[:200] + "...") if summary and len(summary) > 200 else (summary or None),
+        "summary_ko": summary or None,
+        "is_summarized": False,
+        "full_text": full_text,
+    }
+    return save_article(data)
 
 
 def complete_scrap(queue_id: int, success: bool, error_message: Optional[str] = None) -> None:

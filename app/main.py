@@ -5,7 +5,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -27,6 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 import app.supabase_db as supabase_db
+from app.briefing import available_dates as briefing_available_dates, load_briefing
 from app.scheduler import is_collecting, run_collection_now, start_scheduler, stop_scheduler
 
 # 템플릿 및 정적 파일 경로
@@ -136,6 +137,49 @@ async def news_archive(
             "selected_date": target_date.isoformat(),
             "available_dates": available_dates,
             "article_count": len(articles),
+        },
+    )
+
+
+@app.get("/briefing", response_class=HTMLResponse, summary="모닝 브리핑 (AI·주식 / 부동산 / 경제방송 / 링크드인)")
+async def morning_briefing(
+    request: Request,
+    date: Optional[str] = None,
+):
+    """저장소의 data/briefings/YYYY-MM-DD.json 을 읽어 모닝 브리핑 페이지를 렌더링한다."""
+    dates = briefing_available_dates()
+
+    selected = None
+    if date:
+        try:
+            selected = datetime.strptime(date, "%Y-%m-%d").date().isoformat()
+        except ValueError:
+            selected = None
+
+    # 요청 날짜에 브리핑이 없으면 가장 최신 브리핑으로 대체
+    if selected not in dates:
+        selected = dates[0] if dates else None
+
+    briefing = load_briefing(selected) if selected else None
+
+    newer_date = None
+    older_date = None
+    if selected and selected in dates:
+        idx = dates.index(selected)
+        newer_date = dates[idx - 1] if idx > 0 else None
+        older_date = dates[idx + 1] if idx + 1 < len(dates) else None
+
+    return templates.TemplateResponse(
+        "briefing.html",
+        {
+            "request": request,
+            "briefing": briefing,
+            "selected_date": selected or "",
+            "available_dates": dates,
+            "newer_date": newer_date,
+            "older_date": older_date,
+            # 날짜 선택기 max 값 — Vercel(UTC)에서도 한국 날짜 기준으로 계산한다
+            "today": (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d"),
         },
     )
 
@@ -261,8 +305,14 @@ async def scrap_article(request: Request):
         raise HTTPException(status_code=400, detail="유효하지 않은 URL입니다")
 
     try:
+        # 원문 전문이 저장된 항목(Instinct 브리핑 등)은 큐에 함께 실어 보낸다.
+        # full_text 컬럼 마이그레이션 전이라도 스크랩은 동작해야 하므로 조회 실패는 무시한다.
+        try:
+            full_text = supabase_db.get_article_full_text(url)
+        except Exception:
+            full_text = None
         supabase_db.mark_article_scrapped(url)
-        queue_id = supabase_db.enqueue_scrap(url, title, source_name)
+        queue_id = supabase_db.enqueue_scrap(url, title, source_name, content=full_text)
         return {
             "status": "ok",
             "queued": queue_id is not None,
@@ -295,3 +345,55 @@ async def mark_scrap_done(request: Request):
 
     supabase_db.complete_scrap(queue_id, success, error_message)
     return {"status": "ok"}
+
+
+@app.post("/api/briefing", summary="Instinct 아침 브리핑 항목 추가 (에이전트용)")
+async def add_briefing(request: Request):
+    """Instinct 에이전트가 생성한 아침 브리핑 항목을 기사로 적재한다.
+
+    body: {
+        "date": "2026-11-21",           # 선택(참고용)
+        "items": [
+            {"title": str, "url": str, "summary": str, "fulltext": str?},
+            ...
+        ]
+    }
+    항목은 source_name="Instinct 브리핑"으로 저장되어 홈/아카이브 카드에 자연스럽게 표시된다.
+    """
+    _verify_cron_secret(request)
+    data = await request.json()
+    items = data.get("items")
+    if not isinstance(items, list) or not items:
+        raise HTTPException(status_code=400, detail="items 배열이 필요합니다")
+    if len(items) > 100:
+        raise HTTPException(status_code=400, detail="items는 한 번에 최대 100개까지 가능합니다")
+
+    inserted = 0
+    skipped: list = []
+    errors: list = []
+    for raw in items:
+        title = (raw.get("title") or "").strip()
+        url = (raw.get("url") or "").strip()
+        summary = (raw.get("summary") or "").strip()
+        fulltext = (raw.get("fulltext") or "").strip() or None
+        if not title or not (url.startswith("http://") or url.startswith("https://")):
+            skipped.append(url or title or "(제목 없음)")
+            continue
+        try:
+            if supabase_db.url_exists(url):
+                skipped.append(url)
+                continue
+            row = supabase_db.save_briefing_item(
+                title=title,
+                url=url,
+                summary=summary,
+                full_text=fulltext,
+                source_url=data.get("source_url"),
+            )
+            if row:
+                inserted += 1
+        except Exception as e:
+            logger.error(f"브리핑 항목 저장 실패: {url} — {e}")
+            errors.append(url)
+
+    return {"status": "ok", "inserted": inserted, "skipped": skipped, "errors": errors}

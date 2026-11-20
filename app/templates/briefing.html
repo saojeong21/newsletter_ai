@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+
+{% block title %}{% if briefing %}{{ briefing.date_label }} 피클’s 모닝 브리핑{% else %}피클’s 모닝 브리핑{% endif %} — AI 뉴스레터{% endblock %}
+
+{% block content %}
+
+{# ── 소스 아이콘 컬러 매핑 ── #}
+{% set src_colors = {
+    '한국경제':     'linear-gradient(135deg,#0ea5e9,#38bdf8)',
+    '서울경제':     'linear-gradient(135deg,#f43f5e,#fb7185)',
+    '매일경제':     'linear-gradient(135deg,#3b82f6,#60a5fa)',
+    '연합인포맥스': 'linear-gradient(135deg,#8b5cf6,#a78bfa)',
+    '머니투데이':   'linear-gradient(135deg,#14b8a6,#2dd4bf)',
+    '삼프로TV':     'linear-gradient(135deg,#f97316,#fb923c)',
+    '한국경제TV':   'linear-gradient(135deg,#f59e0b,#fbbf24)',
+    'LinkedIn':     'linear-gradient(135deg,#0a66c2,#378fe9)'
+} %}
+
+{% if briefing %}
+
+<!-- ── 브리핑 히어로 ── -->
+<section class="page-hero briefing-hero" aria-labelledby="briefingTitle">
+    <div class="hero-pill" aria-hidden="true">
+        <span class="hero-pill-dot"></span>
+        피클’s 모닝 브리핑 · 매일 오전 10시
+    </div>
+
+    <h1 class="hero-title" id="briefingTitle">{{ briefing.date_label }} 피클’s 모닝 브리핑</h1>
+
+    {% if briefing.headline %}
+    <p class="briefing-headline">{{ briefing.headline }}</p>
+    {% endif %}
+
+    <div class="hero-stats" aria-label="브리핑 통계">
+        <span class="stat-badge">
+            <span class="stat-badge-icon" aria-hidden="true">📰</span>
+            <span class="stat-badge-value">{{ briefing.total }}</span>
+            <span class="stat-badge-label">건</span>
+        </span>
+        {% if briefing.highlight_count %}
+        <span class="stat-badge">
+            <span class="stat-badge-icon" aria-hidden="true">★</span>
+            <span class="stat-badge-value">{{ briefing.highlight_count }}</span>
+            <span class="stat-badge-label">주요</span>
+        </span>
+        {% endif %}
+        <span class="stat-badge">
+            <span class="stat-badge-icon" aria-hidden="true">🗂️</span>
+            <span class="stat-badge-value">{{ briefing.section_count }}</span>
+            <span class="stat-badge-label">섹션</span>
+        </span>
+    </div>
+
+    <div class="hero-controls">
+        <label for="briefingDatePicker" class="sr-only">브리핑 날짜 선택</label>
+        <input
+            type="date"
+            id="briefingDatePicker"
+            class="date-picker"
+            value="{{ briefing.date }}"
+            max="{{ today }}"
+            onchange="location.href='/briefing?date=' + this.value"
+            aria-label="날짜를 선택하면 해당 날짜 브리핑으로 이동합니다"
+        >
+        {% if newer_date %}
+        <a href="/briefing?date={{ newer_date }}" class="btn btn-ghost btn-sm">← 최신 브리핑</a>
+        {% endif %}
+        {% if older_date %}
+        <a href="/briefing?date={{ older_date }}" class="btn btn-ghost btn-sm">이전 브리핑 →</a>
+        {% endif %}
+    </div>
+
+    {% if briefing.coverage %}
+    <p class="briefing-coverage">{{ briefing.coverage }}</p>
+    {% endif %}
+</section>
+
+{% if available_dates | length > 1 %}
+<nav class="date-nav" aria-label="브리핑 날짜 목록">
+    <span class="date-nav-label">브리핑 날짜:</span>
+    <div class="date-chips">
+        {% for d in available_dates[:10] %}
+        <a
+            href="/briefing?date={{ d }}"
+            class="date-chip {% if d == briefing.date %}active{% endif %}"
+            {% if d == briefing.date %}aria-current="page"{% endif %}
+        >{{ d }}</a>
+        {% endfor %}
+    </div>
+</nav>
+{% endif %}
+
+{% if briefing.total > 0 %}
+
+<!-- ── 섹션 필터 + 검색 ── -->
+<div class="search-filter-bar" role="group" aria-label="브리핑 섹션 필터 및 검색">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input
+        type="search"
+        class="search-input"
+        id="briefingSearch"
+        placeholder="브리핑 검색..."
+        aria-label="브리핑 제목 검색"
+        autocomplete="off"
+    >
+    <div class="filter-sep" aria-hidden="true"></div>
+    <div class="filter-pills" role="group" aria-label="섹션 필터">
+        <button class="filter-pill active" data-section-filter="all" aria-pressed="true">전체</button>
+        {% for section in briefing.sections %}
+        {% if section.count > 0 %}
+        <button class="filter-pill" data-section-filter="{{ section.key }}" aria-pressed="false">
+            {{ section.no }}. {{ section.title }} <span class="filter-count">{{ section.count }}</span>
+        </button>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ── 섹션별 카드 ── -->
+{% for section in briefing.sections %}
+{% if section.count > 0 %}
+<section
+    class="briefing-section"
+    data-section="{{ section.key }}"
+    data-hidden="false"
+    style="--section-color: {{ section.color }}"
+    aria-labelledby="section-{{ section.key }}"
+>
+    <header class="briefing-section-header">
+        <span class="briefing-section-no" aria-hidden="true">{{ section.no }}</span>
+        <div class="briefing-section-titles">
+            <h2 class="briefing-section-title" id="section-{{ section.key }}">
+                <span aria-hidden="true">{{ section.icon }}</span> {{ section.title }}
+            </h2>
+            {% if section.lead %}
+            <p class="briefing-section-lead">{{ section.lead }}</p>
+            {% endif %}
+        </div>
+        <span class="briefing-section-count">{{ section.count }}건</span>
+    </header>
+
+    <div class="news-grid" aria-label="{{ section.title }} 카드">
+        {% for item in section.cards %}
+        {% set src_color = src_colors.get(item.source_name, section.color) %}
+        <article
+            class="news-card briefing-card{% if item.highlight %} is-highlight{% endif %}"
+            data-section="{{ section.key }}"
+            data-title="{{ item.title | lower }}"
+            data-url="{{ item.url }}"
+            data-source-name="{{ item.source_name }}"
+            data-original-title="{{ item.title }}"
+            aria-label="{{ item.source_name }} — {{ item.title }}"
+        >
+            <div class="card-body">
+                <!-- 헤더: 소스 아이콘 + 소스명(작성자) + 시각 -->
+                <div class="card-header">
+                    <div class="source-icon" style="background: {{ src_color }}" aria-hidden="true">{{ item.source_name[:2] }}</div>
+                    <div class="card-source-info">
+                        <span class="card-source-name">{{ item.source_name }}</span>
+                        {% if item.author %}
+                        <span class="card-author">{{ item.author }}</span>
+                        {% endif %}
+                    </div>
+                    {% if item.time_label %}
+                    <time class="card-time" {% if item.datetime_attr %}datetime="{{ item.datetime_attr }}"{% endif %}>{{ item.time_label }}</time>
+                    {% endif %}
+                </div>
+
+                <!-- 제목 -->
+                <h3 class="card-title">
+                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="card-title-link">{{ item.title }}</a>
+                </h3>
+
+                <!-- 요약 -->
+                <div class="card-summary">
+                    <p class="summary-text">{{ item.summary }}</p>
+                    {% if item.note %}
+                    <p class="card-note">{{ item.note }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- 푸터: 태그 + 스크랩/원문 -->
+                <div class="card-footer">
+                    <div class="card-tags">
+                        {% if item.highlight %}<span class="briefing-pin">★ 주요</span>{% endif %}
+                        {% for tag in item.tags %}
+                        <span class="tag-topic">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="card-actions">
+                        <button
+                            class="scrap-btn"
+                            aria-label="Obsidian에 스크랩"
+                            title="Obsidian에 스크랩"
+                        >
+                            <span class="scrap-icon" aria-hidden="true">🔖</span>
+                            <span class="scrap-label">스크랩</span>
+                        </button>
+                        <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">원문 보기 →</a>
+                    </div>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endfor %}
+
+<!-- 검색 결과 없음 -->
+<div id="noSearchResults" class="empty-state" style="display:none;" aria-live="polite">
+    <div class="empty-icon" aria-hidden="true">🔍</div>
+    <h2 class="empty-title">검색 결과가 없습니다</h2>
+    <p class="empty-desc">다른 검색어나 섹션을 선택해 보세요.</p>
+</div>
+
+{% if briefing.notes %}
+<section class="briefing-notes" aria-labelledby="briefingNotesTitle">
+    <h2 class="briefing-notes-title" id="briefingNotesTitle">📌 이 브리핑에 대해</h2>
+    <ul class="briefing-notes-list">
+        {% for note in briefing.notes %}
+        <li>{{ note }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+{% else %}
+
+<!-- 브리핑 데이터는 있으나 항목이 없는 경우 -->
+<div class="empty-state" role="main">
+    <div class="empty-icon" aria-hidden="true">☕</div>
+    <h2 class="empty-title">{{ briefing.date_label }} 브리핑이 비어 있습니다</h2>
+    <p class="empty-desc">이 날짜의 JSON에 아직 항목이 없습니다.<br>data/briefings/{{ briefing.date }}.json 을 채워 커밋하면 바로 반영됩니다.</p>
+</div>
+
+{% endif %}
+
+{% else %}
+
+<!-- 브리핑 데이터 자체가 없는 경우 -->
+<div class="empty-state" role="main">
+    <div class="empty-icon" aria-hidden="true">☕</div>
+    <h2 class="empty-title">아직 피클’s 모닝 브리핑이 없습니다</h2>
+    <p class="empty-desc">
+        data/briefings/YYYY-MM-DD.json 파일을 추가하고 커밋·푸시하면<br>
+        Vercel 자동 배포로 이 화면에 브리핑이 나타납니다.
+    </p>
+    <div class="empty-actions">
+        <a href="/" class="btn btn-primary">AI 뉴스 홈으로</a>
+        <a href="/news" class="btn btn-ghost">아카이브 보기</a>
+    </div>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    /* ──────────────────────────────────────────
+       섹션 필터 + 검색
+    ────────────────────────────────────────── */
+    (function() {
+        var pills      = document.querySelectorAll('[data-section-filter]');
+        var searchInput = document.getElementById('briefingSearch');
+        var sections   = document.querySelectorAll('.briefing-section');
+        var cards      = document.querySelectorAll('.briefing-card');
+        var noResults  = document.getElementById('noSearchResults');
+
+        if (!sections.length) return;
+
+        var currentSection = 'all';
+        var currentSearch  = '';
+
+        function applyFilters() {
+            var totalVisible = 0;
+
+            sections.forEach(function(section) {
+                var sectionKey = section.getAttribute('data-section');
+                var sectionVisible = 0;
+
+                section.querySelectorAll('.briefing-card').forEach(function(card) {
+                    var title = card.getAttribute('data-title') || '';
+                    var sectionOk = currentSection === 'all' || sectionKey === currentSection;
+                    var searchOk  = currentSearch === '' || title.indexOf(currentSearch) !== -1;
+                    var show = sectionOk && searchOk;
+
+                    card.setAttribute('data-hidden', show ? 'false' : 'true');
+                    if (show) sectionVisible++;
+                });
+
+                section.setAttribute('data-hidden', sectionVisible === 0 ? 'true' : 'false');
+                totalVisible += sectionVisible;
+            });
+
+            if (noResults) {
+                noResults.style.display = (cards.length > 0 && totalVisible === 0) ? 'block' : 'none';
+            }
+        }
+
+        pills.forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                currentSection = this.getAttribute('data-section-filter');
+
+                pills.forEach(function(p) {
+                    p.classList.remove('active');
+                    p.setAttribute('aria-pressed', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-pressed', 'true');
+
+                applyFilters();
+            });
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                currentSearch = this.value.trim().toLowerCase();
+                applyFilters();
+            });
+        }
+    })();
+
+    /* ──────────────────────────────────────────
+       스크랩 버튼 (Obsidian 큐)
+    ────────────────────────────────────────── */
+    (function() {
+        var scrapBtns = document.querySelectorAll('.scrap-btn');
+        if (!scrapBtns.length) return;
+
+        function resetBtn(btn, iconEl, labelEl) {
+            btn.disabled = false;
+            btn.classList.remove('scrap-loading');
+            if (iconEl)  iconEl.textContent  = '🔖';
+            if (labelEl) labelEl.textContent = '스크랩';
+        }
+
+        function handleScrap(btn) {
+            var card = btn.closest('.briefing-card');
+            if (!card) return;
+
+            var title      = card.getAttribute('data-original-title') || '';
+            var url        = card.getAttribute('data-url') || '';
+            var sourceName = card.getAttribute('data-source-name') || '';
+
+            if (!url || !(url.startsWith('http://') || url.startsWith('https://'))) {
+                showToast({ type: 'error', title: '오류', message: 'URL을 찾을 수 없습니다.' });
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('scrap-loading');
+            var iconEl  = btn.querySelector('.scrap-icon');
+            var labelEl = btn.querySelector('.scrap-label');
+            if (iconEl)  iconEl.textContent  = '⏳';
+            if (labelEl) labelEl.textContent = '저장 중...';
+
+            fetch('/api/scrap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title, url: url, source_name: sourceName })
+            })
+            .then(function(res) {
+                return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+            })
+            .then(function(result) {
+                if (result.ok) {
+                    btn.classList.remove('scrap-loading');
+                    btn.classList.add('scrap-done');
+                    if (iconEl)  iconEl.textContent  = '✅';
+                    if (labelEl) labelEl.textContent = '저장됨';
+                    var msg = result.data.queued
+                        ? 'Obsidian 저장이 예약되었습니다.'
+                        : '이미 스크랩된 항목입니다.';
+                    showToast({ type: 'success', title: '스크랩 완료', message: msg });
+                } else {
+                    var errMsg = (result.data && result.data.detail) || '저장에 실패했습니다.';
+                    showToast({ type: 'error', title: '스크랩 실패', message: errMsg });
+                    resetBtn(btn, iconEl, labelEl);
+                }
+            })
+            .catch(function(err) {
+                showToast({ type: 'error', title: '요청 실패', message: err.message || '네트워크 오류' });
+                resetBtn(btn, iconEl, labelEl);
+            });
+        }
+
+        scrapBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (btn.classList.contains('scrap-done')) return;
+                handleScrap(btn);
+            });
+        });
+    })();
+</script>
+{% endblock %}

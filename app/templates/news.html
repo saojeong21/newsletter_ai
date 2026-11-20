@@ -84,6 +84,7 @@
                 or '한겨레' in article.source_name
                 or 'naver' in src_key
                 or 'kakao' in src_key %}
+            {% set is_briefing = article.source_name == 'Instinct 브리핑' %}
             {% set src_color = src_colors.get(article.source_name, 'linear-gradient(135deg,#6b7280,#9ca3af)') %}
             {% set src_initials = article.source_name[:2] %}
 
@@ -123,9 +124,13 @@
                         <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="read-more-link">
                             원문 보기 →
                         </a>
+                        {% if is_briefing %}
+                        <span class="tag-region instinct">Instinct</span>
+                        {% else %}
                         <span class="tag-region {% if is_domestic %}domestic{% else %}international{% endif %}">
                             {% if is_domestic %}국내{% else %}해외{% endif %}
                         </span>
+                        {% endif %}
                         {% if article.is_summarized and article.summary_ko %}
                         <span class="ai-badge">AI 요약</span>
                         {% endif %}
