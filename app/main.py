@@ -104,6 +104,8 @@ async def home(
 ):
     target_date = _parse_date_param(date)
     articles = supabase_db.get_articles_by_date(target_date)
+    # Instinct 브리핑 카드는 전용 페이지(/instinct-briefing)에서만 보이도록 홈에서는 제외
+    articles = [a for a in articles if a.source_name != supabase_db.BRIEFING_SOURCE_NAME]
     available_dates = supabase_db.get_available_dates()
 
     today_str = datetime.today().strftime("%Y-%m-%d")
@@ -127,6 +129,8 @@ async def news_archive(
 ):
     target_date = _parse_date_param(date)
     articles = supabase_db.get_articles_by_date(target_date)
+    # 홈과 마찬가지로 Instinct 브리핑 카드는 아카이브에서도 제외 (전용 페이지에서만 표시)
+    articles = [a for a in articles if a.source_name != supabase_db.BRIEFING_SOURCE_NAME]
     available_dates = supabase_db.get_available_dates()
 
     return templates.TemplateResponse(
@@ -143,14 +147,42 @@ async def news_archive(
 
 @app.get("/instinct-briefing", response_class=HTMLResponse, summary="Instinct 브리핑")
 async def instinct_briefing(request: Request):
-    """POST /api/briefing으로 적재된 Instinct 브리핑 항목을 최신순 카드로 보여준다."""
+    """POST /api/briefing으로 적재된 Instinct 브리핑 항목을 카테고리 섹션별 카드로 보여준다."""
     articles = supabase_db.get_briefing_items()
+
+    # 카테고리별 그룹핑 (고정 순서 + 미분류는 '기타'로 맨 뒤)
+    grouped: dict = {}
+    for a in articles:
+        grouped.setdefault(a.category or "기타", []).append(a)
+
+    sections = []
+    for no, cat in enumerate(supabase_db.BRIEFING_CATEGORIES, start=1):
+        cards = grouped.pop(cat["title"], [])
+        if cards:
+            sections.append({**cat, "no": no, "count": len(cards), "cards": cards})
+    for title in sorted(grouped):  # '기타' 및 정의 외 카테고리
+        cards = grouped[title]
+        sections.append({
+            "key": "etc", "title": title, "icon": "🗂️", "color": "#64748b",
+            "no": len(sections) + 1, "count": len(cards), "cards": cards,
+        })
+
+    # 가장 최근 항목의 날짜를 KST 기준 날짜 라벨로 표시
+    date_label = None
+    if articles:
+        latest = max(a.collected_at or a.published_at for a in articles)
+        kst = latest + timedelta(hours=9)
+        weekdays_ko = ["월", "화", "수", "목", "금", "토", "일"]
+        date_label = f"{kst.year}년 {kst.month}월 {kst.day}일 {weekdays_ko[kst.weekday()]}요일"
+
     return templates.TemplateResponse(
         "instinct_briefing.html",
         {
             "request": request,
-            "articles": articles,
+            "sections": sections,
+            "date_label": date_label,
             "article_count": len(articles),
+            "section_count": len(sections),
         },
     )
 
@@ -390,6 +422,9 @@ async def add_briefing(request: Request):
         url = (raw.get("url") or "").strip()
         summary = (raw.get("summary") or "").strip()
         fulltext = (raw.get("fulltext") or "").strip() or None
+        category = (raw.get("category") or "").strip() or None
+        if category and category not in supabase_db.BRIEFING_CATEGORY_TITLES:
+            category = None  # 정의되지 않은 카테고리는 미분류(기타)로 저장
         if not title or not (url.startswith("http://") or url.startswith("https://")):
             skipped.append(url or title or "(제목 없음)")
             continue
@@ -403,6 +438,7 @@ async def add_briefing(request: Request):
                 summary=summary,
                 full_text=fulltext,
                 source_url=data.get("source_url"),
+                category=category,
             )
             if row:
                 inserted += 1
@@ -411,3 +447,43 @@ async def add_briefing(request: Request):
             errors.append(url)
 
     return {"status": "ok", "inserted": inserted, "skipped": skipped, "errors": errors}
+
+
+@app.post("/api/briefing/category", summary="브리핑 항목 카테고리 백필 (에이전트용)")
+async def backfill_briefing_category(request: Request):
+    """이미 저장된 Instinct 브리핑 항목의 category를 갱신한다.
+
+    body: {
+        "updates": [
+            {"url": str, "category": str},   # category는 허용 목록 중 하나, null이면 미분류
+            ...
+        ]
+    }
+    """
+    _verify_cron_secret(request)
+    data = await request.json()
+    updates = data.get("updates")
+    if not isinstance(updates, list) or not updates:
+        raise HTTPException(status_code=400, detail="updates 배열이 필요합니다")
+    if len(updates) > 200:
+        raise HTTPException(status_code=400, detail="updates는 한 번에 최대 200개까지 가능합니다")
+
+    updated = 0
+    skipped: list = []
+    for raw in updates:
+        url = (raw.get("url") or "").strip()
+        category = raw.get("category")
+        category = (category or "").strip() or None if isinstance(category, str) or category is None else None
+        if category and category not in supabase_db.BRIEFING_CATEGORY_TITLES:
+            skipped.append(url)
+            continue
+        if not url:
+            skipped.append("(url 없음)")
+            continue
+        try:
+            updated += supabase_db.set_briefing_category(url, category)
+        except Exception as e:
+            logger.error(f"카테고리 백필 실패: {url} — {e}")
+            skipped.append(url)
+
+    return {"status": "ok", "updated": updated, "skipped": skipped}

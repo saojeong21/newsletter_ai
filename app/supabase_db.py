@@ -68,6 +68,7 @@ class ArticleRow:
     url: str = ""
     source_name: str = ""
     source_url: Optional[str] = None
+    category: Optional[str] = None
     published_at: Optional[datetime] = None
     collected_at: Optional[datetime] = None
     description: Optional[str] = None
@@ -83,6 +84,7 @@ class ArticleRow:
             url=d.get("url", ""),
             source_name=d.get("source_name", ""),
             source_url=d.get("source_url"),
+            category=d.get("category"),
             published_at=_parse_dt(d.get("published_at")),
             collected_at=_parse_dt(d.get("collected_at")),
             description=d.get("description"),
@@ -314,6 +316,16 @@ def get_article_full_text(article_url: str) -> Optional[str]:
 
 BRIEFING_SOURCE_NAME = "Instinct 브리핑"
 
+# /instinct-briefing 페이지 섹션 정의 (표시 순서대로). category 컬럼에는 title 문자열이 그대로 저장된다.
+BRIEFING_CATEGORIES = [
+    {"key": "linkedin", "title": "LinkedIn AI 피드", "icon": "💼", "color": "#0a66c2"},
+    {"key": "ai_news", "title": "AI 뉴스·주식", "icon": "📈", "color": "#6366f1"},
+    {"key": "realestate", "title": "국내 부동산", "icon": "🏠", "color": "#10b981"},
+    {"key": "sampro", "title": "삼프로TV", "icon": "🎬", "color": "#f59e0b"},
+    {"key": "jobs", "title": "채용 공고", "icon": "📋", "color": "#f43f5e"},
+]
+BRIEFING_CATEGORY_TITLES = [c["title"] for c in BRIEFING_CATEGORIES]
+
 
 def save_briefing_item(
     title: str,
@@ -321,6 +333,7 @@ def save_briefing_item(
     summary: str,
     full_text: Optional[str] = None,
     source_url: Optional[str] = None,
+    category: Optional[str] = None,
 ) -> Optional[ArticleRow]:
     """Instinct 아침 브리핑 항목을 ainewsletter_items에 저장한다.
 
@@ -339,6 +352,7 @@ def save_briefing_item(
         "summary_ko": summary or None,
         "is_summarized": False,
         "full_text": full_text,
+        "category": category,
     }
     return save_article(data)
 
@@ -358,6 +372,20 @@ def get_briefing_items(limit: int = 100) -> List[ArticleRow]:
         )
         resp.raise_for_status()
         return [ArticleRow.from_dict(row) for row in resp.json()]
+
+
+def set_briefing_category(url: str, category: Optional[str]) -> int:
+    """Instinct 브리핑 행의 category를 갱신한다 (백필용). 갱신된 행 수를 반환."""
+    with _client() as c:
+        resp = c.patch(
+            f"{_base_url()}/{TABLE}",
+            headers=_service_headers(),
+            params={"url": f"eq.{url}", "source_name": f"eq.{BRIEFING_SOURCE_NAME}"},
+            json={"category": category},
+        )
+        resp.raise_for_status()
+        rows = resp.json()
+        return len(rows) if isinstance(rows, list) else 0
 
 
 def complete_scrap(queue_id: int, success: bool, error_message: Optional[str] = None) -> None:
