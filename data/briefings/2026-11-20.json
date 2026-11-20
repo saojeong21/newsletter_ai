@@ -597,7 +597,7 @@
       "title": "링크드인 AI 채용 공고 (Director+)",
       "icon": "💼",
       "color": "#8b5cf6",
-      "lead": "링크드인에서 직접 확인한 AI 기업·AI 사업 조직의 Director 이상 비즈니스 직군 공고 12건입니다. 4시간 전 올라온 IBM·23시간 전 Anthropic처럼 지원자가 적은 신규 공고부터, 한국 엔터프라이즈 시장을 여는 AI 랩(OpenAI·Sierra·Cohere)의 세일즈 리더 자리까지 지원 가치가 높은 순으로 담았습니다.",
+      "lead": "링크드인에서 직접 확인한 AI 기업·AI 사업 조직의 Director 이상 비즈니스 직군 공고 14건입니다. 4시간 전 올라온 IBM·23시간 전 Anthropic처럼 지원자가 적은 신규 공고부터, 한국 엔터프라이즈 시장을 여는 AI 랩(OpenAI·Sierra·Cohere)의 세일즈 리더 자리까지 지원 가치가 높은 순으로 담았습니다. 목록에서 빠져 있던 Higgsfield AI(APAC GTM Lead)와 크래프톤 AI Frontier 본부(10년 이상 BD)도 상세 확인해 더했으며, 두 건 모두 Director 직함은 아니어서 실제 직급·고용형태는 카드에 그대로 적었습니다.",
       "items": [
         {
           "title": "Sales Director — Anthropic",
@@ -650,6 +650,16 @@
           "summary": "APJ 제조·자동차 산업의 GTM 전략을 이끄는 시니어 실행 리더로, 일본·한국·인도 고객과 파트너의 임원 관계 구축이 핵심입니다. 데이터·AI로 산업별 파이프라인과 도입을 키우는 역할이며 APJ 출장이 잦습니다.",
           "tags": ["Data/AI", "GTM", "APJ"],
           "note": "지원자 54명"
+        },
+        {
+          "title": "GTM Lead, APAC — Higgsfield AI",
+          "author": "Higgsfield AI",
+          "url": "https://www.linkedin.com/jobs/view/4487579209/",
+          "source_name": "LinkedIn",
+          "posted_label": "2주 전",
+          "summary": "AI 영상 생성 기업 Higgsfield의 APAC(일본 제외) GTM 리드입니다. 다만 공고 본문은 이 자리를 'APAC GTM Account Executive'로 규정합니다 — 팀을 이끄는 디렉터가 아니라, 에이전시·브랜드·B2B 파트너의 첫 딜을 직접 소싱·클로징하고 계약 후 계정까지 오너십하는 IC 역할입니다. B2B SaaS 세일즈 경험, 3개 이상 APAC 시장에서의 크리에이티브·마케팅·AI 기술 판매, APAC 시니어 바이어 네트워크가 필수이며 영어 기본·한국어 등은 우대입니다. 알마티 온사이트(비자·항공·임시 주거 지원) 또는 APAC 원격 근무이고 GTM팀은 주 6일 근무, 보상은 USD 베이스+스톡옵션입니다.",
+          "tags": ["AI 영상", "GTM", "APAC"],
+          "note": "지원자 120명(하루 10명) · 서울(Remote) 표기 · Lead 직함이나 팀 관리 없는 IC"
         },
         {
           "title": "Sales Director, Korea — ServiceNow",
@@ -710,6 +720,17 @@
           "summary": "IBM이 운영하는 Confluent(데이터 스트리밍) 사업의 아시아 지역 세일즈 디렉터로, Enterprise AE 팀을 이끌며 신규 사업과 consumption 확대를 만듭니다. 오늘 올라와 지원자가 가장 적은 공고입니다.",
           "tags": ["데이터 스트리밍", "Sales 리드", "서울"],
           "note": "지원자 25명 이내 · 서울(Remote) 표기",
+          "highlight": true
+        },
+        {
+          "title": "[AI Frontier Div.] AI Business Development (10년 이상) — KRAFTON",
+          "author": "KRAFTON Inc.",
+          "url": "https://www.linkedin.com/jobs/view/4488128536/",
+          "source_name": "LinkedIn",
+          "posted_label": "2주 전",
+          "summary": "크래프톤 AI Frontier 본부에서 AI 모델·에이전트로 신사업을 만드는 사업개발(BD) 역할입니다. 제품이 완성되기 전부터 고객·파트너와 수요를 검증하고 공동개발·PoC·구매를 이끌어, 제안·협상·계약과 초기 매출까지 End-to-End로 주도합니다. 사업전략·사업개발 주도 성과와 조직 성장 리딩 경험, AI 모델·에이전트 이해와 관련 사업 경험, 글로벌 규제·저작권 이해, PO와의 협업이 요구되며 우대요건에 OpenAI·Google 등 프론티어 모델 프로바이더와 API·기술·사업 협력 딜을 직접 리딩한 경험이 있습니다. 근무지는 역삼 센터필드입니다.",
+          "tags": ["AI 사업", "BD", "서울"],
+          "note": "지원자 11명 · 역삼 센터필드 온사이트 · 전문계약직(수습 5개월)",
           "highlight": true
         },
         {
